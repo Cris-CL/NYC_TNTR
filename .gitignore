@@ -5,3 +5,4 @@ __pycache__/
 compose-dev.yaml
 gs
 .env
+.json
