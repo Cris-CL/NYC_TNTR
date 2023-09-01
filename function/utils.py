@@ -49,7 +49,7 @@ def identify_file(file_name):
         return "assis"
     elif "nippo" in file_name.lower():
         return "nippo"
-    elif "goukei shosai" in file_name.lower():
+    elif "goukei sh" in file_name.lower():
         return "shosai"
     elif "goukei d" in file_name.lower():
         return "goukei data"
@@ -62,6 +62,7 @@ def load_file(file_name):
         df = pd.read_excel(file_name,index_col=False,skipfooter=1)
         df = add_file_name_to_df(df,file_name)
         df = add_date_to_df(df)
+        df["DAY"] = get_date_from_file(file_name)
         return df
     elif file_type == "nippo":
         df = pd.read_excel(file_name,index_col=False,skipfooter=2)
