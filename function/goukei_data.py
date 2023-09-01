@@ -1,4 +1,4 @@
-gd_col = {
+gd_jp_en = {
     'オーダ番号': 'order_number',
     '会計番号': 'bill_number',
     '営業日': 'business_day',
