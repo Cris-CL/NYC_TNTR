@@ -19,12 +19,11 @@ def webhook(request):
       return '<h1> This is a webhook listener!</h1>'
   if request.method == 'POST':
     posted_data=list(request.headers)
+    print(type(posted_data))
     print("We have received a request")
     print(f"GMT Time of request {gmt_timestamp}")
     print(f"Japan Time of request {jap_timestamp}")
     print(posted_data)
-    cur_date=jap_timestamp
-    print("Date and time of update ====>",cur_date)
     http_status=jsonify({'status':'success'}),200
   else:
     http_status='',400
