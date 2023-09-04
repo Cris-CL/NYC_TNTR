@@ -1,6 +1,7 @@
 # functions-framework==3.*
 # google-cloud-storage
 # google-cloud-pubsub
+
 from google.cloud import storage
 from google.cloud import pubsub_v1
 import os

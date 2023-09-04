@@ -24,7 +24,7 @@ nippo_jp_en = {
     '平均時間': 'average_time',
     '男子人数': 'number_of_men',
     '女子      生産性': 'women_productivity',
-    '男子      生産性': 'women_productivity',
+    '男子      生産性': 'men_productivity',
     '社人': 'employee',
     '社時': 'company_time',
     'ア人': 'a_hito',
