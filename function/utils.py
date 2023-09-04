@@ -125,6 +125,7 @@ def clean_nippo(df):
     ni_str_col = {
     'weekday':'string',
     'weather':'string',
+    'visit_time':'string'
     }
     df = df.astype({
         col:ni_str_col.get(col,"float64") for col in df.columns
@@ -196,7 +197,10 @@ def load_file(path,file_name):
             df = add_date_to_df(df)
             month = get_month_nippo(file_name)
             df = correct_date_nippo(df,month).dropna(axis=0)
-            return df
+            return df.copy().astype({"visit_time":"str"})
+            # for col in df.columns:
+            #     df[col].map(lambda x: print(f"{x} , {col} {type(x)}") if type(x) not in [type(""),type(1),type(1.1),""] else None)
+            # return df
 
         elif file_type == "shosai":
             df = pd.read_excel(file_path,index_col=False,engine="openpyxl")

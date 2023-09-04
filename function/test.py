@@ -1,6 +1,6 @@
 from utils import *
 import os
-
+import pickle as pkl
 file_list = [
     'Goukei shousai 8-9.xlsx',
     'Goukei deta 8-2.xlsx',
@@ -59,6 +59,10 @@ for file in file_list:
         # df.to_csv(f"util/{file_name_clean}.csv",index=False,)
     except Exception as e:
         print(df.info())
+        pkl.dump(df,open(f"util/{file_name_clean}.pkl","wb"))
+        # df = df.astype({"visit_time":"str"})
+        # for col in df.columns:
+        #     df[col].map(lambda x: print(f"{x} , {col} {type(x)}") if type(x) not in [type(""),type(1),type(1.1),""] else None)
         raise(e)
         print(e)
         print(f"error saving {file_name_clean}")
