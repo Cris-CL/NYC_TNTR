@@ -74,8 +74,8 @@ def add_file_name_to_df(df,file_name):
 
 def add_date_to_df(df):
     date = get_timestamp("Asia/Tokyo")
-    df["DATE"] = date
-    df = df.astype({"DATE":"str"})
+    df["DATE_UPLOADED"] = date
+    df = df.astype({"DATE_UPLOADED":"str"})
     return df.copy()
 
 def upload_bq(df,table_id,project_id):
@@ -125,7 +125,7 @@ def clean_nippo(df):
     ni_str_col = {
     'weekday':'string',
     'weather':'string',
-    'visit_time':'string'
+    # 'visit_time':'string'
     }
     df = df.astype({
         col:ni_str_col.get(col,"float64") for col in df.columns
@@ -168,8 +168,11 @@ def clean_goukei_data(df):
     df.astype(
         {col:gd_str_col.get(col,"float64") for col in df.columns}
     )
+    df["visit_time"] = df["visit_time"].map(str)
+    df["hostess_name"] = df["hostess_name"].map(str)
+
     for col_str in gd_str_col.keys():
-        df[col_str] = df[col_str].apply(lambda x: None if type(x) == type("") and x == "nan" else x)
+        df[col_str] = df[col_str].apply(lambda x: None if type(x) == type("") and x.lower().replace(" ","") in ["nan",""] else x)
     return df.copy()
 
 
@@ -197,7 +200,7 @@ def load_file(path,file_name):
             df = add_date_to_df(df)
             month = get_month_nippo(file_name)
             df = correct_date_nippo(df,month).dropna(axis=0)
-            return df.copy().astype({"visit_time":"str"})
+            return df.copy()
             # for col in df.columns:
             #     df[col].map(lambda x: print(f"{x} , {col} {type(x)}") if type(x) not in [type(""),type(1),type(1.1),""] else None)
             # return df
