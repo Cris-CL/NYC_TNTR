@@ -58,12 +58,13 @@ def get_shared_bottle(df):
     output: goukei shosai df with shared bottle column and  cp_bottle column as list
     """
     ## the next line is to make sure that the cp_bottle column is a list
-    df["cp_bottle"] = df["cp_bottle"].map(lambda x:
+    df["shared_bottle"] = df["cp_bottle"].map(lambda x:
                                           x if type(x) == type([]) else
                                           x.split(",") if type(x)==type("") and "," in x else
-                                          None if type(x)==type(0.1) else [x] if x != None else None)
+                                          None if type(x)==type(0.1) else [x] if x != None else None).map(
+                                              lambda x: len(x) if type(x) == type([]) else 1)
 
-    df["shared_bottle"] = df["cp_bottle"].map(lambda x: len(x) if type(x) == type([]) else 1)
+    # df["shared_bottle"] = df["cp_bottle"].map(lambda x: len(x) if type(x) == type([]) else 1)
     return df.copy()
 
 
@@ -210,6 +211,7 @@ def load_file(path,file_name):
             df = df[gs_jp_en.keys()]
             df.columns = [gs_jp_en[col] for col in df.columns]
             df = clean_shosai(df)
+            df = get_shared_bottle(df)
             df = add_file_name_to_df(df,file_name)
             df = add_date_to_df(df)
 
