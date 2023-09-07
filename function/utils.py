@@ -67,6 +67,25 @@ def get_shared_bottle(df):
     # df["shared_bottle"] = df["cp_bottle"].map(lambda x: len(x) if type(x) == type([]) else 1)
     return df.copy()
 
+def fix_time_assis(df):
+
+    """this function see the string of each column and verifies that the length is 4
+    if not adds a 0 at the beginning until it is 4 in case is empty doesn't do anything"""
+    columns_time = ["start_time","leave_time"]
+    def fix_time(x):
+        if type(x) != type(""):
+            return x
+        elif len(x) == 0:
+            return x
+        elif len(x) < 4:
+            return "0"*(4-len(x))+str(x)
+        else:
+            return x
+    for col in columns_time:
+        df[col] = df[col].map(lambda x: x.replace(".0","") if type(x) == type("") else x)
+        df[col] = df[col].map(fix_time)
+    return df.copy()
+
 
 def add_file_name_to_df(df,file_name):
     df["FILE_NAME"] = file_name
@@ -190,6 +209,7 @@ def load_file(path,file_name):
             df = add_date_to_df(df)
             df.insert(0,"DAY",get_date_from_file(file_name))
             df["DAY"] = df["DAY"].astype("str")
+            df = fix_time_assis(df)
             return df
 
         elif file_type == "nippo":
