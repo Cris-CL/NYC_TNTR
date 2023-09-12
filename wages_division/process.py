@@ -1,4 +1,3 @@
-
 # pandas==1.5.1
 # google-cloud-bigquery>=3.3.5
 # gspread==5.7.2
@@ -37,16 +36,15 @@ def get_dataframe():
   return results_df
 
 
-
 def format_worksheet(worksheet):
-    """Format the worksheet to adjust column width and format the cells"""
+    # Define the formatting options for each column
     format_options = {
         'A': {'numberFormat': {'type': 'NUMBER', 'pattern': '0'}},  # Number, no decimals
         'B': {'numberFormat': {'type': 'NUMBER', 'pattern': '0'}},  # Number, no decimals
-        'C': {'numberFormat': {'type': 'NUMBER', 'pattern': '0'}},  # Time format
+        'C': {'numberFormat': {'type': 'TIME', 'pattern':"hh:mm:ss am/pm"}},  # Time format
         'D': {'numberFormat': {'type': 'TIME', 'pattern':"hh:mm:ss am/pm"}},  # Time format
 
-        'E': {'numberFormat': {'type': 'TIME', 'pattern':"hh:mm:ss am/pm"}},  # Number, no decimals
+        'E': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
         'F': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}}, # Number, no decimals
         'G': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
         'H': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
@@ -60,8 +58,9 @@ def format_worksheet(worksheet):
         'P': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
         'Q': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
         'R': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
-        }
-    ## Using batch update to format the columns
+
+    }
+
     batch = [{"range":f"{col}2:{col}","format":options} for col, options in format_options.items()]
     worksheet.batch_format(batch)
     return
@@ -103,14 +102,15 @@ def update_google_sheets_with_retry(results_df,sh):
                     ]
 
 
+    sheets = [sht_name.title for sht_name in sh.worksheets()]
     for name in results_df["hostess_name"].unique():
         while True:
             try:
                 df_temp = results_df[results_df["hostess_name"]==name][columns_ind].copy()
                 df_temp.columns = [column_before.replace("commision_","") for column_before in df_temp.columns]
-                sheets = [sht_name.title for sht_name in sh.worksheets()]
                 if name not in sheets:
                     new_sheet_name = name
+                    sheets.append(name)
                     new_worksheet =  sh.add_worksheet(title=name,
                                                       rows=str(df_temp.shape[0]),
                                                       cols=str(df_temp.shape[1]))
@@ -118,6 +118,7 @@ def update_google_sheets_with_retry(results_df,sh):
                     new_worksheet = sh.worksheet(name)
 
                 new_worksheet.clear()
+                sleep(0.1)
                 cell_list = new_worksheet.range(1, 1, len(df_temp)+1, len(df_temp.columns))
 
                 for cell in cell_list:
@@ -130,15 +131,20 @@ def update_google_sheets_with_retry(results_df,sh):
                 cell_list = [clean_cell(cell_dirty) for cell_dirty in cell_list]
 
                 new_worksheet.update_cells(cell_list,value_input_option='USER_ENTERED')
+                sleep(0.1)
+
                 try:
                     format_worksheet(new_worksheet)
-                except:
+                except Exception as e:
                     print(f"Couldn't format {name} Sheet")
+                    print(e)
                 break  # Exit the retry loop if successful
             except Exception as e:
                 if "RATE_LIMIT_EXCEEDED" in str(e):
                     print("API rate limit exceeded. Waiting and retrying...")
-                    sleep(61)  # Wait for 60 seconds before retrying
+                    waiting_time = 60
+                    sleep(waiting_time)  # Wait for 60 seconds before retrying
+                    waiting_time = waiting_time * 1.05
                     print(f"retrying {name} sheet")
                 else:
                     raise  # Re-raise the exception if it's not a rate limit error
@@ -149,3 +155,4 @@ def main_process(dummy_1,dummy_2):
   results_df = get_dataframe()
   sh = get_spreadsheet()
   update_google_sheets_with_retry(results_df,sh)
+  print(f"Finished processing {dummy_1}")
