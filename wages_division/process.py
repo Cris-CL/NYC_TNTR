@@ -60,9 +60,19 @@ def format_worksheet(worksheet):
         'R': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
 
     }
-
     batch = [{"range":f"{col}2:{col}","format":options} for col, options in format_options.items()]
-    worksheet.batch_format(batch)
+    while True:
+        try:
+            worksheet.batch_format(batch)
+        except Exception as e:
+            if "RESOURCE_EXHAUSTED" in str(e):
+                format_waiting = 5
+                print(f"Waiting for {format_waiting} seconds before retrying")
+                sleep(format_waiting)
+                format_waiting = format_waiting * 1.2
+            else:
+              raise
+        break
     return
 
 
@@ -118,7 +128,6 @@ def update_google_sheets_with_retry(results_df,sh):
                     new_worksheet = sh.worksheet(name)
 
                 new_worksheet.clear()
-                sleep(0.1)
                 cell_list = new_worksheet.range(1, 1, len(df_temp)+1, len(df_temp.columns))
 
                 for cell in cell_list:
@@ -131,8 +140,6 @@ def update_google_sheets_with_retry(results_df,sh):
                 cell_list = [clean_cell(cell_dirty) for cell_dirty in cell_list]
 
                 new_worksheet.update_cells(cell_list,value_input_option='USER_ENTERED')
-                sleep(0.1)
-
                 try:
                     format_worksheet(new_worksheet)
                 except Exception as e:
