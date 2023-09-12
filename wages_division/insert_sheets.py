@@ -143,12 +143,24 @@ def format_worksheet(worksheet):
     format_options = {
         'A': {'numberFormat': {'type': 'NUMBER', 'pattern': '0'}},  # Number, no decimals
         'B': {'numberFormat': {'type': 'NUMBER', 'pattern': '0'}},  # Number, no decimals
-        'C': {'numberFormat': {'type': 'NUMBER', 'pattern': '0.00'}},  # Number, 2 decimals
-        'F': {'numberFormat': {'type': 'TIME', 'pattern':"hh:mm:ss am/pm"}},  # Time format
-        'G': {'numberFormat': {'type': 'TIME', 'pattern':"hh:mm:ss am/pm"}},  # Time format
-        'H': {'numberFormat': {'type': 'NUMBER', 'pattern': '0.00'}},  # Number, 2 decimals
-        'I': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}}  # Number, no decimals
-    }
+        'C': {'numberFormat': {'type': 'NUMBER', 'pattern': '0'}},  # Time format
+        'D': {'numberFormat': {'type': 'TIME', 'pattern':"hh:mm:ss am/pm"}},  # Time format
+
+        'E': {'numberFormat': {'type': 'TIME', 'pattern':"hh:mm:ss am/pm"}},  # Number, no decimals
+        'F': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}}, # Number, no decimals
+        'G': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
+        'H': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
+        'I': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
+        'J': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
+        'K': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
+        'L': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
+        'M': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
+        'N': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
+        'O': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
+        'P': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
+        'Q': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
+        'R': {'numberFormat': {'type': 'CURRENCY', 'pattern': "[$¥-411]#,##0"}},  # Number, no decimals
+        }
     ## Using batch update to format the columns
     batch = [{"range":f"{col}2:{col}","format":options} for col, options in format_options.items()]
     worksheet.batch_format(batch)
