@@ -27,7 +27,7 @@ def get_dataframe():
 
     # BigQuery query
     query = QUERY_ASSIS
-    bq_client = bigquery.Client()  ## TODO: add the json file path here
+    bq_client = bigquery.Client()
     query_job = bq_client.query(query)
     results_df = query_job.to_dataframe()
 
@@ -207,9 +207,8 @@ def update_google_sheets_with_retry(results_df, sh, hostess_name, month_number):
                     print(
                         f"API rate limit exceeded. Waiting {waiting_time} and retrying {name} sheet"
                     )
-                    sleep(waiting_time)  # Wait for 60 seconds before retrying
+                    sleep(waiting_time)  # Wait for 10 seconds before retrying, then wait 20, then 30, etc.
                     waiting_time = waiting_time + 10
-                    print(f"retrying {name} sheet")
                 else:
                     print("Some other error ocurred")
                     print(e)
@@ -222,5 +221,5 @@ def main_process(name, month):
         return
     results_df = get_dataframe()
     sh = get_spreadsheet()
-    update_google_sheets_with_retry(results_df, sh)
-    print(f"Finished processing {dummy_1}")
+    update_google_sheets_with_retry(results_df, sh, name,month)
+    print(f"Finished processing {name} for the month {month}")
