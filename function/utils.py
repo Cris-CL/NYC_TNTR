@@ -1,10 +1,12 @@
 import pytz
+import os
 import pandas as pd
 from datetime import datetime
 from assis import assis_jp_en
 from goukei_data import gd_jp_en
 from goukei_shosai import gs_jp_en
 from nippo import nippo_jp_en
+
 
 def get_timestamp(timezone_name):
   dt = datetime.now(pytz.timezone(timezone_name))
@@ -114,7 +116,7 @@ def identify_file(file_name):
     elif "goukei sh" in file_name.lower():
         return "shosai"
     elif "goukei d" in file_name.lower():
-        return "goukei data"
+        return "goukei_data"
     else:
         return "unknown"
 
@@ -196,9 +198,9 @@ def clean_goukei_data(df):
     return df.copy()
 
 
-def load_file(path,file_name):
+def load_file(uri,file_name):
     file_type = identify_file(file_name)
-    file_path = f"{path}/{file_name}"
+    file_path = uri
     try:
         if file_type == "assis":
             df = pd.read_excel(file_path,index_col=False,skipfooter=1,engine="openpyxl")
@@ -237,7 +239,7 @@ def load_file(path,file_name):
 
             return df
 
-        elif file_type == "goukei data":
+        elif file_type == "goukei_data":
             df = pd.read_excel(file_path,index_col=False,skiprows=5,engine="openpyxl")
             df = df[gd_jp_en.keys()]
             df.columns = [gd_jp_en[col] for col in df.columns]
@@ -251,3 +253,44 @@ def load_file(path,file_name):
     except Exception as e:
         print(e)
         return print("error loading file")
+
+def check_exist_db(file_name):
+    """
+    Function
+    That checks if the file already exist in the database or not
+    """
+    query_check = ""
+    # here the query should be executed
+    pass
+
+def file_exist_already(file_name):
+    """If the file exist then the file is deleted from the db"""
+    query_delete = ""
+    # Here the query should be executed
+    pass
+
+
+def full_upload_process(df,file_type,file_name):
+    PROJECT_ID = os.environ["PROJECT_ID"]
+    DATASET = os.environ["DATASET"]
+    TABLE_1 = os.environ["TABLE_1"]
+    TABLE_2 = os.environ["TABLE_2"]
+    TABLE_3 = os.environ["TABLE_3"]
+    TABLE_4 = os.environ["TABLE_4"]
+
+    upload_dict = {
+        "assis":TABLE_1,
+        "nippo":TABLE_2,
+        "shosai":TABLE_3,
+        "goukei_data":TABLE_4,
+    }
+    id_to_upload = upload_dict.get(file_type)
+    check = check_exist_db()
+    if check == True:
+        file_exist_already(file_name)
+    elif check == False:
+
+
+    upload_bq(df,id_to_upload,PROJECT_ID):
+
+    return
