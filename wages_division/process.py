@@ -8,7 +8,7 @@ import google.auth
 from google.cloud import bigquery
 import gspread
 from time import sleep
-from query import full_query
+from query import create_query
 
 
 def get_spreadsheet():
@@ -21,8 +21,8 @@ def get_spreadsheet():
     return sh
 
 
-def get_dataframe():
-    QUERY_ASSIS = full_query
+def get_dataframe(month=8,year=2023):
+    QUERY_ASSIS = create_query(,year=2023)
     # Initialize Google Sheets and BigQuery clients
 
     # BigQuery query
@@ -219,7 +219,7 @@ def main_process(name, month):
     if name == "test":
         print("test_run")
         return
-    results_df = get_dataframe()
+    results_df = get_dataframe(month=month)
     sh = get_spreadsheet()
     update_google_sheets_with_retry(results_df, sh, name,month)
     print(f"Finished processing {name} for the month {month}")
