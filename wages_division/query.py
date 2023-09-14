@@ -204,7 +204,7 @@ SELECT
 from sh_piv
 pivot (
   sum(sh_piv.total) as commision
-  FOR code in ('DR1','DR2','DR3','BT','FD','KA','OT','TB','TP','EN','EX','CR','DH','HC'))
+  FOR code in ('DR1','DR2','DR3','BT','FD','KA','OT','TB','TP','EN','EX','CR','DH','HC')) --------------->>> change this line to add more products dynamically
 order by business_day asc, flat_names asc
 )
 ----------------END PART TWO----------------
