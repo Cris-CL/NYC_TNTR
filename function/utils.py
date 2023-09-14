@@ -1,6 +1,7 @@
 import pytz
 import os
 import pandas as pd
+from google.cloud import bigquery
 from datetime import datetime
 from assis import assis_jp_en
 from goukei_data import gd_jp_en
@@ -100,13 +101,6 @@ def add_date_to_df(df):
     df = df.astype({"DATE_UPLOADED":"str"})
     return df.copy()
 
-def upload_bq(df,table_id,project_id):
-    df.to_gbq(
-            destination_table=table_id,
-            project_id=project_id,
-            progress_bar=False,
-            if_exists="append")
-    return
 
 def identify_file(file_name):
     if "assis" in file_name.lower():
@@ -254,23 +248,62 @@ def load_file(uri,file_name):
         print(e)
         return print("error loading file")
 
-def check_exist_db(file_name):
+
+def get_list_reports(dataset,table,row):
+    """
+    Given a table name, returns a list with the file names that were already uploaded to bq
+    """
+    with bigquery.Client() as client:
+
+        query = f"""SELECT DISTINCT {row}
+                FROM `{dataset}.{table}`"""
+
+        query_job = client.query(query)
+
+        rows = query_job.result()
+        list_reports_uploaded = [row.file for row in rows]
+
+    return list_reports_uploaded
+
+
+def check_exist_db(file_name,dataset,table,row):
     """
     Function
     That checks if the file already exist in the database or not
     """
-    query_check = ""
-    # here the query should be executed
-    pass
 
-def file_exist_already(file_name):
+    try:
+        list_files = get_list_reports(dataset,table,row)
+    except Exception as e:
+        list_files = []
+        print(e)
+
+    if file_name in list_files:
+        return True
+    else:
+        return False
+
+
+def file_exist_already(file_name,dataset,table,row):
     """If the file exist then the file is deleted from the db"""
-    query_delete = ""
-    # Here the query should be executed
-    pass
+    with bigquery.Client() as client:
+        query = f"""
+        DELETE `{dataset}.{table}`
+        WHERE {row} = '{file_name}'
+        """
+        delete_job = client.query(query)
+        delete_job.result()
+    return
 
+def upload_bq(df,table_id,project_id):
+    df.to_gbq(
+            destination_table=table_id,
+            project_id=project_id,
+            progress_bar=False,
+            if_exists="append")
+    return
 
-def full_upload_process(df,file_type,file_name):
+def full_upload_process(df,file_name):
     PROJECT_ID = os.environ["PROJECT_ID"]
     DATASET = os.environ["DATASET"]
     TABLE_1 = os.environ["TABLE_1"]
@@ -284,13 +317,16 @@ def full_upload_process(df,file_type,file_name):
         "shosai":TABLE_3,
         "goukei_data":TABLE_4,
     }
-    id_to_upload = upload_dict.get(file_type)
-    check = check_exist_db()
+    file_type = identify_file(file_name)
+    table_upload = upload_dict.get(file_type)
+    check = check_exist_db(file_name,DATASET,table_upload,row)
+    row = "FILE_NAME"
+
     if check == True:
-        file_exist_already(file_name)
+        file_exist_already(file_name,DATASET,table,row)
     elif check == False:
+        print("New file")
 
-
-    upload_bq(df,id_to_upload,PROJECT_ID):
+    upload_bq(df,table_upload,PROJECT_ID)
 
     return
