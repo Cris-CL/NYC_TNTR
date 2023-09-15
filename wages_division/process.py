@@ -11,10 +11,9 @@ from time import sleep
 from query import create_query
 
 
-def get_spreadsheet():
+def get_spreadsheet(spreadsheet_name=None):
     # Specify the Google Sheets document and worksheet
     credentials, _ = google.auth.default()
-    spreadsheet_name = os.environ["SPREADSHEET_NAME"]
     gc = gspread.authorize(credentials)
     # Open the Google Sheets document
     sh = gc.open(spreadsheet_name)
@@ -22,7 +21,7 @@ def get_spreadsheet():
 
 
 def get_dataframe(month=8,year=2023):
-    QUERY_ASSIS = create_query(,year=2023)
+    QUERY_ASSIS = create_query(month,year=2023)
     # Initialize Google Sheets and BigQuery clients
 
     # BigQuery query
@@ -117,7 +116,7 @@ def format_worksheet(worksheet):
     return
 
 
-def update_google_sheets_with_retry(results_df, sh, hostess_name, month_number):
+def update_google_sheets_with_retry(results_df, sh, hostess_name):
     def clean_cell(unit_cell):
         if unit_cell.value.lower() in ["nan", "none", "nat", "null", "<na>", " "]:
             unit_cell.value = ""
@@ -216,10 +215,11 @@ def update_google_sheets_with_retry(results_df, sh, hostess_name, month_number):
 
 
 def main_process(name, month):
+    spreadsheet_name = os.environ["SPREADSHEET_NAME"]
     if name == "test":
         print("test_run")
         return
     results_df = get_dataframe(month=month)
-    sh = get_spreadsheet()
-    update_google_sheets_with_retry(results_df, sh, name,month)
+    sh = get_spreadsheet(spreadsheet_name)
+    update_google_sheets_with_retry(results_df, sh, name)
     print(f"Finished processing {name} for the month {month}")

@@ -11,8 +11,10 @@ PRODUCT_1 = os.environ["PRODUCT_1"]
 PRODUCT_2 = os.environ["PRODUCT_2"]
 
 def get_comission_list(month,year=2023):
+
     client = bigquery.Client()
     query = f"""
+    ----- query for getting the comission list ------
     with codes as (
     SELECT
     CODE as code
@@ -30,8 +32,10 @@ def get_comission_list(month,year=2023):
         query_job = client.query(query)
         results = query_job.result()
         com_lis = [code["code"] for code in results]
+
     except Exception as e:
         print(e)
+        print("Using default comission list")
         com_lis = ['DR1','DR2','DR3','BT','FD','KA','OT','TB','TP','EN','EX','CR','DH','HC']
     return com_lis
 
@@ -194,8 +198,6 @@ def create_query(month,year=2023):
 
     SELECT
     business_day,
-    -- cp_code,
-    -- cp_in_charge,
     CASE
     WHEN cp_in_charge is null THEN SPLIT(cp_code,",")
     ELSE SPLIT(cp_in_charge,",")
