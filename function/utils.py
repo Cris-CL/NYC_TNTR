@@ -1,5 +1,6 @@
 import pytz
 import os
+import re
 import pandas as pd
 from google.cloud import bigquery,storage
 from datetime import datetime
@@ -16,24 +17,36 @@ def get_timestamp(timezone_name):
 
 
 def get_date_from_file(file_name):
-    print(file_name)
-    date_ls = file_name.replace("Assis","").replace(".xlsx","").replace(" ","").split("-")
-    # print(date_ls)
-    timezone_name = "Asia/Tokyo"
-    stamp_now = datetime.now(tz=pytz.timezone(timezone_name))
-    ## day format
-    if len(date_ls[0]) == 1:
-        date_ls[0] = f"0{date_ls[0]}"
-    elif len(date_ls[0]) >2:
-        return print("incorrect day format")
-    ## month format
-    if len(date_ls[1]) == 1:
-        date_ls[1] = f"0{date_ls[1]}"
-    elif len(date_ls[1]) >2:
-        return print("incorrect month format")
-    # print(date_ls)
-    date_2 = f'{stamp_now.year}{date_ls[0]}{date_ls[1]}'
-    return date_2
+    ## new way
+    date_pattern = r'\d{8}'
+
+    # Search for the date pattern in the file_name
+    match = re.search(date_pattern, file_name)
+
+    if match:
+        return match.group()
+    else:
+        try:
+            date_ls = file_name.replace("Assis","").replace(".xlsx","").replace(" ","").split("-")
+            # print(date_ls)
+            timezone_name = "Asia/Tokyo"
+            stamp_now = datetime.now(tz=pytz.timezone(timezone_name))
+            ## day format
+            if len(date_ls[0]) == 1:
+                date_ls[0] = f"0{date_ls[0]}"
+            elif len(date_ls[0]) >2:
+                return print("incorrect day format")
+            ## month format
+            if len(date_ls[1]) == 1:
+                date_ls[1] = f"0{date_ls[1]}"
+            elif len(date_ls[1]) >2:
+                return print("incorrect month format")
+            # print(date_ls)
+            date_2 = f'{stamp_now.year}{date_ls[0]}{date_ls[1]}'
+        except Exception as e:
+            print(e)
+            date_2 = None
+        return date_2
 
 
 def get_month_nippo(file_name):
@@ -106,13 +119,22 @@ def add_date_to_df(df):
 
 
 def identify_file(file_name):
-    if "assis" in file_name.lower():
+    lower_file_name = file_name.lower()
+    if "ass" in lower_file_name:
         return "assis"
-    elif "nippo" in file_name.lower():
+    elif "nippo" in lower_file_name:
         return "nippo"
-    elif "goukei sh" in file_name.lower():
+    elif "gsh" in lower_file_name or "ghs" in lower_file_name:
         return "shosai"
-    elif "goukei d" in file_name.lower():
+    elif "gdt" in lower_file_name or "gtd" in lower_file_name:
+        return "goukei_data"
+    elif "assis" in lower_file_name:
+        return "assis"
+    elif "nippo" in lower_file_name:
+        return "nippo"
+    elif "goukei sh" in lower_file_name:
+        return "shosai"
+    elif "goukei d" in lower_file_name:
         return "goukei_data"
     else:
         return "unknown"
