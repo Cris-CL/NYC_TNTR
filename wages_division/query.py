@@ -99,13 +99,13 @@ def create_query(month,year=2023):
 
     CASE
     WHEN
-        PARSE_TIMESTAMP('%H%M', start_time) between  PARSE_TIMESTAMP('%H%M', "0000") AND PARSE_TIMESTAMP('%H%M', "0800")  then PARSE_DATETIME("%Y%m%d %H%M",CONCAT(CAST(DAY as INT64)+1," ",start_time))
+        PARSE_TIMESTAMP('%H%M', start_time) between  PARSE_TIMESTAMP('%H%M', "0000") AND PARSE_TIMESTAMP('%H%M', "0800")  then DATETIME_ADD(PARSE_DATETIME("%Y%m%d %H%M",CONCAT(CAST(DAY as INT64)," ",start_time)), INTERVAL 1 DAY)
         ELSE
         PARSE_DATETIME("%Y%m%d %H%M",CONCAT(CAST(DAY as INT64)," ",start_time))
     END AS start_datetime,
     CASE
     WHEN
-        PARSE_TIMESTAMP('%H%M', leave_time) between  PARSE_TIMESTAMP('%H%M', "0000") AND PARSE_TIMESTAMP('%H%M', "0800")  then PARSE_DATETIME("%Y%m%d %H%M",CONCAT(CAST(DAY as INT64)+1," ",leave_time))
+        PARSE_TIMESTAMP('%H%M', leave_time) between  PARSE_TIMESTAMP('%H%M', "0000") AND PARSE_TIMESTAMP('%H%M', "0800")  then DATETIME_ADD(PARSE_DATETIME("%Y%m%d %H%M",CONCAT(CAST(DAY as INT64)," ",leave_time)), INTERVAL 1 DAY)
         ELSE
         PARSE_DATETIME("%Y%m%d %H%M",CONCAT(CAST(DAY as INT64)," ",leave_time))
     END AS leave_datetime,
