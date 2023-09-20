@@ -12,6 +12,7 @@ def setup_drive_webhook(drive_folder_id, topic_name,credentials):
     subscription_url = f"https://us-central1-{PROJECT_ID}.cloudfunctions.net/{function_name}"
     print(subscription_url)
     #### this is the timestamp of the current time in miliseconds
+
     now = int(datetime.utcnow().timestamp()*1e3)
     expiration = now + 604800000
     # Create a watch request

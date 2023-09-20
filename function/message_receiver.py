@@ -19,10 +19,4 @@ def process_message(event, context):
     else:
         print("Received message with missing data")
 
-    # Acknowledge the message
-    # try:
-    #     print(event)
-    #     print(type(event))
-    # except Exception as e:
-    #     print(e)
     return
