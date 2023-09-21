@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+</head>
+<body>
+  <form>
+    <label for="name">Name:</label>
+    <select id="name" name="name">
+    <option value="店">店</option>
+    <option value="all">All</option>
+    <option value="Aimi">Aimi</option>
+    <option value="Akari">Akari</option>
+    <option value="Amelia">Amelia</option>
+    <option value="Andrea">Andrea</option>
+    <option value="Bella">Bella</option>
+    <option value="Jasmine">Jasmine</option>
+    <option value="Hiro">Hiro</option>
+    <option value="Kiko">Kiko</option>
+    <option value="Lize">Lize</option>
+    <option value="Nova">Nova</option>
+    <option value="Rina">Rina</option>
+    <option value="Riri">Riri</option>
+    <option value="Yuuka">Yuuka</option>
+    <option value="Sol">Sol</option>
+    <option value="Misa">Misa</option>
+    <option value="Nicole">Nicole</option>
+    <option value="Sabrina">Sabrina</option>
+    <option value="Shoko">Shoko</option>
+    <option value="Rio">Rio</option>
+    <option value="Barsha">Barsha</option>
+    <option value="Hanna">Hanna</option>
+    <option value="Erika">Erika</option>
+    <option value="Kurumi">Kurumi</option>
+    <option value="Kaguyah">Kaguyah</option>
+    <option value="Kate">Kate</option>
+    <option value="Lanno">Lanno</option>
+    <option value="Miki">Miki</option>
+    <option value="Rebeca">Rebeca</option>
+    <option value="Koto">Koto</option>
+    <option value="Yuna">Yuna</option>
+    <option value="Kia">Kia</option>
+    <option value="Ayaka">Ayaka</option>
+    <option value="Azami">Azami</option>
+    <option value="Chloe">Chloe</option>
+    <option value="Robin">Robin</option>
+    <option value="Mia Cat">Mia cat</option>
+    <option value="Saeko">Saeko</option>
+    <option value="Kimi">Kimi</option>
+    <option value="Moka">Moka</option>
+    <option value="Kaori">Kaori</option>
+    <option value="Miku">Miku</option>
+    <option value="Barbie">Barbie</option>
+    <option value="ChiharuQueen">Chiharuqueen</option>
+    <option value="Chikage">Chikage</option>
+    <option value="Stephanie">Stephanie</option>
+    <option value="Rico">Rico</option>
+    <option value="Jenny">Jenny</option>
+    <option value="Yumeri">Yumeri</option>
+    <option value="Hasumi">Hasumi</option>
+    <option value="Estella">Estella</option>
+    <option value="Banbi">Banbi</option>
+    <option value="Mocha">Mocha</option>
+    <option value="Mirei">Mirei</option>
+      <!-- Add more name options as needed -->
+    </select><br><br>
+
+    <label for="month">Month (1-12):</label>
+    <select id="month" name="month">
+      <!-- <option value="1">January</option>
+      <option value="2">February</option>
+      <option value="3">March</option>
+      <option value="4">April</option>
+      <option value="5">May</option>
+      <option value="6">June</option>
+      <option value="7">July</option> -->
+      <option value="8">August</option>
+      <option value="9">September</option>
+      <option value="10">October</option>
+      <option value="11">November</option>
+      <option value="12">December</option>
+    </select><br><br>
+
+    <input type="button" value="Calculate" onclick="sendRequest()">
+  </form>
+
+  <script>
+    function sendRequest() {
+      var name = document.getElementById("name").value;
+      var month = document.getElementById("month").value;
+      google.script.run.sendPostRequest(name, month);
+      google.script.host.close();
+    }
+  </script>
+</body>
+</html>
