@@ -5,7 +5,7 @@ from datetime import datetime
 from googleapiclient.discovery import build
 
 load_dotenv()
-def setup_drive_webhook(drive_folder_id,credentials):
+def setup_drive_webhook(drive_folder_id,credentials,min_factor=1):
 
     PROJECT_ID = os.environ.get("PROJECT_ID")
     function_name = os.environ.get("FUNCTION_NAME")
@@ -22,7 +22,8 @@ def setup_drive_webhook(drive_folder_id,credentials):
     weeks = 7 * days
 
     now = int(datetime.utcnow().timestamp()*1e3)
-    expiration = now + 20 * minutes
+    print(now)
+    expiration = now + min_factor * minutes +9*hours
 
     # Create a watch request
     id_gen = str(uuid.uuid4())

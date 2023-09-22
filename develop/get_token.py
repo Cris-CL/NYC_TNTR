@@ -1,11 +1,10 @@
 from __future__ import print_function
-
 import google.auth
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 
-def fetch_start_page_token():
+def fetch_start_page_token(creds):
     """Retrieve page token for the current state of the account.
     Returns & prints : start page token
 
@@ -13,7 +12,8 @@ def fetch_start_page_token():
     TODO(developer) - See https://developers.google.com/identity
     for guides on implementing OAuth2 for the application.
     """
-    creds, _ = google.auth.default()
+    if not creds:
+        creds, _ = google.auth.default()
 
     try:
         # create drive api client
@@ -30,5 +30,5 @@ def fetch_start_page_token():
     return response.get('startPageToken')
 
 
-if __name__ == '__main__':
-    fetch_start_page_token()
+# if __name__ == '__main__':
+#     fetch_start_page_token()
