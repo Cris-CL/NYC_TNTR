@@ -33,19 +33,19 @@ def fetch_changes(saved_start_page_token,creds):
                                               spaces='drive').execute()
             for change in response.get('changes'):
                 # Process change
-                # print(F'Change found for file: {change.get("fileId")}')
-                print(response)
+                print(F'Change found for file: {change.get("fileId")}')
+
             if 'newStartPageToken' in response:
                 # Last page, save this token for the next polling interval
                 saved_start_page_token = response.get('newStartPageToken')
             page_token = response.get('nextPageToken')
-            print(page_token)
-
+            print(f"Page token: {page_token}")
+            print(response)
     except HttpError as error:
         print(F'An error occurred: {error}')
         saved_start_page_token = None
 
-    return saved_start_page_token
+    return saved_start_page_token, response
 
 
 # if __name__ == '__main__':
