@@ -17,6 +17,7 @@ def fetch_changes(saved_start_page_token,creds):
     TODO(developer) - See https://developers.google.com/identity
     for guides on implementing OAuth2 for the application.
     """
+    print("fetching changes")
     if not creds:
         creds, _ = google.auth.default()
     try:
