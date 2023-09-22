@@ -7,3 +7,4 @@ gs
 .env
 .json
 functions/test.py
+**/test.py

@@ -17,14 +17,14 @@ def process_sheet(request):
     try:
       posted_data = request.json
       print("We have received a request")
-      print(posted_data)
-
+    #   print(posted_data)
       column = posted_data["column"]
-      print(column)
       starting_date = posted_data["date"]
+      type_sh = posted_data["type"]
 
-      print(starting_date)
-      update_uri_sheet(matching_column=column,start_date=starting_date)
+      print(f'type: {type_sh} col: {column} date:{starting_date}')
+
+      update_uri_sheet(matching_column=column,start_date=starting_date,sheet_type=type_sh)
 
     except Exception as e:
       print(e)
