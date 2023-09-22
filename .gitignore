@@ -8,4 +8,4 @@ gs
 .json
 functions/test.py
 **/test.py
-.ipynb
+*.ipynb
