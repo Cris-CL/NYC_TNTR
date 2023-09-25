@@ -1,8 +1,10 @@
-from __future__ import print_function
-
 import google.auth
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+import pandas as pd
+from datetime import datetime
+import pytz
+
 
 
 def fetch_changes(saved_start_page_token,creds):
@@ -48,7 +50,27 @@ def fetch_changes(saved_start_page_token,creds):
 
     return saved_start_page_token, response
 
+def changes_to_df(token,response_json):
+  try:
+      df = pd.json_normalize(response_json["changes"])
+      df = df[["fileId","time","file.name"]]
+      df["token"] =  token
+      df.columns = [col.lower().replace(".","_") for col in df.columns]
+      df = df.astype({"token":"int32"})
+      df['time'] = pd.to_datetime(df['time']).dt.tz_convert(None)
+  except:
+      False
+  return df.copy()
 
-# if __name__ == '__main__':
-#     # saved_start_page_token is the token number
-#     fetch_changes(saved_start_page_token=209)
+def df_to_dict(df):
+  result_dict = df.set_index('file_name')['fileid'].to_dict()
+  return result_dict
+
+def changes_to_bq(df,dataset,tracker_table,proj_id):
+  table_name = f"{dataset}.{tracker_table}"
+  last_changes.to_gbq(
+              destination_table=table_name,
+              project_id=proj_id,
+              progress_bar=False,
+              if_exists="append")
+  return
