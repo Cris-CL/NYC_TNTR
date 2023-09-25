@@ -1,5 +1,5 @@
 import os
-def get_uri_query(existing_values,date_start=0):
+def get_query(existing_values,date_start=0,type_sh="undefined"):
 
     try:
         existing_values = existing_values[1:]
@@ -19,7 +19,8 @@ def get_uri_query(existing_values,date_start=0):
     PRODUCT_1 = os.environ["PRODUCT_1"]
     PRODUCT_2 = os.environ["PRODUCT_2"]
 
-    query = f"""
+
+    main_q = f"""
 
     WITH cosa as (
     WITH uri as (WITH totales as (with asv as (
@@ -220,8 +221,10 @@ def get_uri_query(existing_values,date_start=0):
     CASH,
     FILE_NAME
     )
-
+    """
+    uri_part = f"""
     SELECT
+
     business_day,
     FORMAT_TIMESTAMP('%m月 %d日 %a', PARSE_DATE('%Y%m%d', business_day)) AS date_day,
     --FORMAT_TIMESTAMP('%a %b %d 日', PARSE_DATE('%Y%m%d', business_day)) AS date_day,
@@ -237,7 +240,6 @@ def get_uri_query(existing_values,date_start=0):
       WHEN SUM(CREDIT_CARD) <> 0 THEN CONCAT(REGEXP_EXTRACT(cast(SUM(CASH)/SUM(CREDIT_CARD) as string), r'\d*\.\d{{2}}'), ' %')
       ELSE NULL
     END as card_ratio,
-    -- SUM(CASE WHEN client_type = 'type_1' THEN sale_amount ELSE 0 END) AS type_1_sales,
     SUM(CASE WHEN product_classification like '%EN%' THEN number_units ELSE 0 END) AS customers,
     CASE
       WHEN SUM(CASE WHEN product_classification like '%EN%' THEN number_units ELSE 0 END) <> 0 THEN SUM(PAID_AMOUNT)/SUM(CASE WHEN product_classification like '%EN%' THEN number_units ELSE 0 END)
@@ -293,5 +295,19 @@ def get_uri_query(existing_values,date_start=0):
     AND CAST(business_day as INT64) >= CAST({date_start} AS INT64)
     ORDER BY CAST(business_day as INT64) asc
     """
+    data_part = f"""
+    SELECT * FROM uri
+    )
+    SELECT * from cosa
+    WHERE business_day not in {list_values}
+    AND CAST(business_day as INT64) >= CAST({date_start} AS INT64)
+    ORDER BY CAST(business_day as INT64) asc
+    """
 
+    if type_sh == "uri":
+        query = main_q + uri_part
+    elif type_sh == "data":
+        query = main_q + data_part
+    else:
+        return
     return query
