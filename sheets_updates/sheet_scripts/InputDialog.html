@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+</head>
+<body>
+  <h3>Enter starting Date</h3>
+  <input type="text" id="date" placeholder="20230801"><br>
+  <button onclick="sendRequest()">Update URI</button>
+
+  <script>
+    function sendRequest() {
+      var column = 1;
+      var dateInput = document.getElementById("date").value.trim(); // Trim to remove whitespace
+      var date = dateInput === '' ? '0' : dateInput; // Use '0' if input is empty
+
+      google.script.run.sendPostRequest(column, date,"uri");
+
+      google.script.host.close();
+    }
+  </script>
+</body>
+</html>
