@@ -20,19 +20,19 @@ function openDialog_2() {
   SpreadsheetApp.getUi().showModalDialog(html, 'Input Data');
 }
 
-function sendPostRequest(column=1,date=0,type) {
+function sendPostRequest(column=1,date=0,type_name) {
   // Replace 'YOUR_URL_HERE' with the actual URL you want to send the request to
   var url = 'CHANGE_FOR_YOUR_URL';
 
   Logger.log(column);
   Logger.log(date);
   // Check if the month is a valid integer between 1 and 12
-  date = parseInt(date);
+  // date = parseInt(date);
   // Create the request payload
   var payload = {
     column: column,
     date: date,
-    type:type
+    type:type_name
   };
 
   // Create the options for the HTTP request
