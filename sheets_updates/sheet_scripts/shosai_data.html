@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+</head>
+<body>
+  <h3>Update the Shousai Data</h3>
+  <!-- <input type="text" id="date" placeholder="20230801"><br> -->
+  <div>After pressing the button please wait for it to complete updating</div>
+  <button id="updateButton" onclick="sendRequest()">Update 会計詳細データ一覧 > セット毎</button>
+
+  <script>
+    function sendRequest() {
+      var column = 1;
+      // var dateInput = document.getElementById("date").value.trim();
+      // var date = dateInput === '' ? '0' : dateInput;
+      var date = 0;
+
+      // Disable the button
+      document.getElementById("updateButton").disabled = true;
+
+      google.script.run.withSuccessHandler(function(response) {
+        // Handle success here
+        console.log(response);
+        // Enable the button after the request has been processed
+        document.getElementById("updateButton").disabled = false;
+        // Close the dialog after the request has been processed
+        google.script.host.close();
+      }).withFailureHandler(function(error) {
+        // Handle error here
+        console.error(error);
+        // Enable the button in case of failure
+        document.getElementById("updateButton").disabled = false;
+      }).sendPostRequest(column, date, "data");
+    }
+  </script>
+</body>
+</html>
