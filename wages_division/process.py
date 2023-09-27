@@ -94,6 +94,9 @@ def format_worksheet(worksheet):
         "R": {
             "numberFormat": {"type": "CURRENCY", "pattern": "[$¥-411]#,##0"}
         },  # Number, no decimals
+        "S": {
+            "numberFormat": {"type": "CURRENCY", "pattern": "[$¥-411]#,##0"}
+        },  # Number, no decimals
     }
     batch = [
         {"range": f"{col}2:{col}", "format": options}
