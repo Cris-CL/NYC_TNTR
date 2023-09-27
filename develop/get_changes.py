@@ -7,7 +7,7 @@ import pytz
 
 
 
-def fetch_changes(saved_start_page_token,creds):
+def fetch_changes(saved_start_page_token,creds,folder_id):
     """Retrieve the list of changes for the currently authenticated user.
         prints changed file's ID
     Args:
@@ -30,10 +30,10 @@ def fetch_changes(saved_start_page_token,creds):
         # current token from getStartPageToken()
         page_token = saved_start_page_token
         # pylint: disable=maybe-no-member
-
+        query = f"'{folder_id}' in parents"
         while page_token is not None:
             response = service.changes().list(pageToken=page_token,
-                                              spaces='drive').execute()
+                                              spaces='drive',q=query).execute()
             for change in response.get('changes'):
                 # Process change
                 print(F'Change found for file: {change.get("fileId")}')
