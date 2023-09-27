@@ -36,6 +36,37 @@ def get_dataframe(month=8,year=2023):
         results_df[col] = results_df[col].astype(str)
     return results_df
 
+def get_specific_hostess_df(df,hostess_name):
+    columns_ind = [
+        "DAY",
+        "cp_code",
+        "start_time_p",
+        "leave_time_p",
+        "wage_total_daily",
+        "commision_DR1",
+        "commision_DR2",
+        "commision_DR3",
+        "commision_BT",
+        "commision_FD",
+        "commision_KA",
+        "commision_OT",
+        "commision_TB",
+        "commision_TP",
+        "commision_EN",
+        "commision_EX",
+        "commision_CR",
+        "commision_DH",
+        "commision_HC",
+    ]
+
+    df = df[df["hostess_name"] == hostess_name][columns_ind].copy()
+
+    df.columns = [
+        column_before.replace("commision_", "")
+        for column_before in df.columns
+        ]
+    return df
+
 
 def format_worksheet(worksheet):
     # Define the formatting options for each column
@@ -131,27 +162,6 @@ def update_google_sheets_with_retry(results_df, sh, hostess_name):
             pass
         return unit_cell
 
-    columns_ind = [
-        "DAY",
-        "cp_code",
-        "start_time_p",
-        "leave_time_p",
-        "wage_total_daily",
-        "commision_DR1",
-        "commision_DR2",
-        "commision_DR3",
-        "commision_BT",
-        "commision_FD",
-        "commision_KA",
-        "commision_OT",
-        "commision_TB",
-        "commision_TP",
-        "commision_EN",
-        "commision_EX",
-        "commision_CR",
-        "commision_DH",
-        "commision_HC",
-    ]
     ## In case the hostess_name is "all" we will process all the hostess
     ## In case the hostess_name is not "all" we will process only that hostess
 
@@ -163,13 +173,8 @@ def update_google_sheets_with_retry(results_df, sh, hostess_name):
     for name in list_hostess:
         while True:
             try:
-                df_temp = results_df[results_df["hostess_name"] == name][
-                    columns_ind
-                ].copy()
-                df_temp.columns = [
-                    column_before.replace("commision_", "")
-                    for column_before in df_temp.columns
-                ]
+                df_temp = get_specific_hostess_df(results_df, name)
+
                 sheets = [sht_name.title for sht_name in sh.worksheets()]
 
                 if name not in sheets:
