@@ -2,7 +2,7 @@ import os
 def get_query(existing_values,date_start=0,type_sh="undefined"):
 
     try:
-        existing_values = existing_values[1:]
+        existing_values.remove('business_day')
     except:
         existing_values = [""]
 
@@ -18,6 +18,7 @@ def get_query(existing_values,date_start=0,type_sh="undefined"):
     TABLE_4 = os.environ["TABLE_4"]
     PRODUCT_1 = os.environ["PRODUCT_1"]
     PRODUCT_2 = os.environ["PRODUCT_2"]
+    PRODUCT_3 = os.environ["PRODUCT_3"]
 
 
     main_q = f"""
@@ -63,18 +64,25 @@ def get_query(existing_values,date_start=0,type_sh="undefined"):
         from `{DATASET}.{TABLE_3}` as sh
         LEFT JOIN (
         ------ here probably need to change when we define the correct commission table
-          SELECT
-          product_code,
-          CODE as code,
-          CAST(back as INT64) as commission
-          FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_1}`
-          UNION ALL
+--          SELECT
+--          product_code,
+--          CODE as code,
+--          CAST(back as INT64) as commission
+--          FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_1}`
+--          UNION ALL
+
+--          SELECT
+--          set_code as product_code,
+--          CODE as code,
+--          CAST(REF_1 as INT64) as commission
+--          FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_2}`
 
           SELECT
-          set_code as product_code,
-          CODE as code,
-          CAST(REF_1 as INT64) as commission
-          FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_2}`
+          CAST(product_code as STRING) as product_code,
+          nomenclatore as code,
+          CAST(back as INT64) as commission,
+          year_month
+          FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_3}`
 
         ) as prod on sh.order_code = prod.product_code
         LEFT JOIN (
@@ -223,6 +231,7 @@ def get_query(existing_values,date_start=0,type_sh="undefined"):
     )
     """
     uri_part = f"""
+    ----- URI QUERY -----
     SELECT
 
     business_day,
@@ -296,12 +305,13 @@ def get_query(existing_values,date_start=0,type_sh="undefined"):
     ORDER BY CAST(business_day as INT64) asc
     """
     data_part = f"""
-    SELECT * FROM uri
-    )
+    ----- DATA QUERY -----
+    SELECT * FROM uri)
+
     SELECT * from cosa
     WHERE business_day not in {list_values}
     AND CAST(business_day as INT64) >= CAST({date_start} AS INT64)
-    ORDER BY CAST(business_day as INT64) asc
+    ORDER BY CAST(business_day as INT64) asc, CAST(order_number as INT64) asc,CAST(occurrence_number as INT64) asc
     """
 
     if type_sh == "uri":
