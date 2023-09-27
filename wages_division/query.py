@@ -9,24 +9,24 @@ TABLE_3 = os.environ["TABLE_3"]
 TABLE_4 = os.environ["TABLE_4"]
 PRODUCT_1 = os.environ["PRODUCT_1"]
 PRODUCT_2 = os.environ["PRODUCT_2"]
+PRODUCT_3 = os.environ["PRODUCT_3"]
+
+        #   SELECT
+        #   CAST(product_code as STRING) as product_code,
+        #   nomenclatore as code,
+        #   CAST(back as INT64) as commission,
+        #   year_month
+        #   FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_3}`
 
 def get_comission_list(month,year=2023):
 
     client = bigquery.Client()
     query = f"""
     ----- query for getting the comission list ------
-    with codes as (
-    SELECT
-    CODE as code
-    FROM {PROJECT_ID}.{DATASET}.{PRODUCT_1}
-    UNION ALL
-    SELECT
-    CODE as code,
-    FROM {PROJECT_ID}.{DATASET}.{PRODUCT_2}
-    )
-    SELECT distinct code from codes
-    where code is not null
-    order by code asc
+    SELECT distinct nomenclatore as code
+    FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_3}`
+    WHERE nomenclatore is not null
+
     """
     try:
         query_job = client.query(query)
@@ -174,18 +174,14 @@ def create_query(month,year=2023):
 
     from {DATASET}.{TABLE_3} as sh
     LEFT JOIN (
-    SELECT
-    product_code,
-    CODE as code,
-    CAST(back as INT64) as commission
-    FROM {PROJECT_ID}.{DATASET}.{PRODUCT_1}
-    UNION ALL
 
+    ------ query for getting the comission list ------
     SELECT
-    set_code as product_code,
-    CODE as code,
-    CAST(REF_1 as INT64) as commission
-    FROM {PROJECT_ID}.{DATASET}.{PRODUCT_2}
+    CAST(product_code as STRING) as product_code,
+    nomenclatore as code,
+    CAST(back as INT64) as commission
+    FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_3}`
+
     ) as prod on sh.order_code = prod.product_code
     LEFT JOIN (
     SELECT distinct
