@@ -1,6 +1,131 @@
 import os
-def get_query(existing_values,date_start=0,type_sh="undefined"):
+import gspread
+import pandas as pd
+import google.auth
+from google.cloud import bigquery
 
+PROJECT_ID = os.environ["PROJECT_ID"]
+DATASET = os.environ["DATASET"]
+TABLE_3 = os.environ["TABLE_3"]
+TABLE_4 = os.environ["TABLE_4"]
+PRODUCT_1 = os.environ["PRODUCT_1"]
+PRODUCT_2 = os.environ["PRODUCT_2"]
+PRODUCT_3 = os.environ["PRODUCT_3"]
+PRODUCT_M = os.environ["PRODUCT_M"]
+
+
+def delete_if_exist(month,year=2023):
+    month_str = (2-len(str(month)))*"0" + str(month) ## Add a zero if the month is less than 10
+    client = bigquery.Client()
+    query = f"""
+    ----- query for getting the price year_month ------
+    DELETE `{DATASET}.{PRODUCT_3}`
+    WHERE CAST(year_month AS STRING) = '{year}{month_str}'
+    """
+
+    try:
+        query_job = client.query(query)
+        results = query_job.result()
+    except Exception as e:
+        print(e)
+        return False
+    return True
+
+
+def get_prices_year_db(month,year=2023):
+    month_str = (2-len(str(month)))*"0" + str(month) ## Add a zero if the month is less than 10
+
+    client = bigquery.Client()
+    query = f"""
+    ----- query for getting the price year_month ------
+    SELECT distinct year_month
+    FROM `{DATASET}.{PRODUCT_3}`
+    WHERE CAST(year_month AS STRING) = '{year}{month_str}'
+    """
+
+    try:
+        query_job = client.query(query)
+        results = query_job.result()
+        ym_list = [year_month["year_month"] for year_month in results]
+
+    except Exception as e:
+        print(e)
+        return False
+    return ym_list
+
+
+def get_prices_sh(sheet_name):
+
+  SHEET_ID = os.environ["SHEET_ID"]
+  products_dict = {
+        '商品コード':'product_code',
+        '商品名':'product_name',
+        '商品名（かな）':'product_name_kana',
+        '商品種別':'product_type',
+        '商品詳細種別':'by_product_details',
+        '商品単位区分':'product_units_classification',
+        '売単価':'selling_price',
+        '消費税区分':'consumption_tax_zone',
+        'サービス料区分':'service_fee_category',
+        '原価':'cost',
+        'バック':'back',
+        'nomenclature':'nomenclatore',
+        'セット種別':'set_type',
+        '基準時間':'standard_time',
+        'class':'class',
+        'year_month':'year_month'
+        }
+
+  credentials, _ = google.auth.default()
+  gc = gspread.authorize(credentials)
+  try:
+    prices_master = gc.open_by_key(SHEET_ID)
+
+    ws = prices_master.worksheet(sheet_name)
+    df =pd.DataFrame(ws.get_all_values())
+    df.columns = df.iloc[0]
+    df = df.iloc[1:]
+    df.columns = [products_dict[col] for col in df.columns]
+    df = df[df["product_code"]!= ""].copy()
+    integer_cols = {
+    "product_code":"int64",
+    "selling_price":"int64",
+    "cost":"int64",
+    "back":"int64",
+    "year_month":"int64"
+    }
+    for col in integer_cols.keys():
+        df[col] = df[col].map(lambda x: x.replace(",","").replace(" ","") if isinstance(x,str) else x)
+        df[col] = df[col].map(lambda x: 0 if isinstance(x,str) and x == "" else x)
+    df = df.astype({f'{col}':f'{integer_cols.get(col,"string")}' for col in df.columns})
+    for col in df.columns:
+        print("a")
+        if col not in integer_cols.keys():
+            df[col] = df[col].map(lambda x: None if isinstance(x,str) and x == "" else x)
+    ym_values_df = df["year_month"].unique()
+    already_up = get_prices_year_db(month=9)
+    try:
+        for val in ym_values_df:
+            if val in already_up:
+                print("This year_month is already in the database")
+                ext_month = str(val)[4:6]
+                delete_if_exist(month=ext_month)
+    except:
+        pass
+    df.to_gbq(
+      destination_table=f"{DATASET}.{PRODUCT_M}",
+      project_id=PROJECT_ID,
+      progress_bar=False,
+      if_exists="append")
+
+    print("Using sheets prices info")
+    return True
+  except:
+    return False
+
+
+def get_query(existing_values,month="09",type_sh="undefined"):
+    month_str = (2-len(str(month)))*"0" + str(month) ## Add a zero if the month is less than 10
     try:
         existing_values.remove('business_day')
     except:
@@ -9,17 +134,12 @@ def get_query(existing_values,date_start=0,type_sh="undefined"):
     list_values = f"""({','.join([f"'{val}'" for val in existing_values])})"""
     if list_values == '()':
         list_values = "('')"
+    use_new = get_prices_sh("new")
 
-    PROJECT_ID = os.environ["PROJECT_ID"]
-    DATASET = os.environ["DATASET"]
-    # TABLE_1 = os.environ["TABLE_1"]
-    # TABLE_2 = os.environ["TABLE_2"]
-    TABLE_3 = os.environ["TABLE_3"]
-    TABLE_4 = os.environ["TABLE_4"]
-    PRODUCT_1 = os.environ["PRODUCT_1"]
-    PRODUCT_2 = os.environ["PRODUCT_2"]
-    PRODUCT_3 = os.environ["PRODUCT_3"]
-
+    if use_new == False:
+        print(f"Using saved table {PRODUCT_3}")
+    elif use_new == True:
+        PRODUCT_3 = PRODUCT_M
 
     main_q = f"""
 
@@ -64,27 +184,15 @@ def get_query(existing_values,date_start=0,type_sh="undefined"):
         from `{DATASET}.{TABLE_3}` as sh
         LEFT JOIN (
         ------ here probably need to change when we define the correct commission table
---          SELECT
---          product_code,
---          CODE as code,
---          CAST(back as INT64) as commission
---          FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_1}`
---          UNION ALL
-
---          SELECT
---          set_code as product_code,
---          CODE as code,
---          CAST(REF_1 as INT64) as commission
---          FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_2}`
-
           SELECT
           CAST(product_code as STRING) as product_code,
           nomenclatore as code,
           CAST(back as INT64) as commission,
-          year_month
+          CAST(year_month AS STRING) AS year_month
           FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_3}`
 
         ) as prod on sh.order_code = prod.product_code
+--            AND sh.year_month LIKE CONCAT(prod.year_month,'%')
         LEFT JOIN (
           SELECT distinct
           CAST(order_number as STRING) as order_number_gd,
@@ -301,16 +409,17 @@ def get_query(existing_values,date_start=0,type_sh="undefined"):
     )
     SELECT * from cosa
     WHERE business_day not in {list_values}
-    AND CAST(business_day as INT64) >= CAST({date_start} AS INT64)
+    AND CAST(business_day as STRING) like CONCAT({year_present},CAST({month_str} AS STRING),"%")
     ORDER BY CAST(business_day as INT64) asc
     """
+
+    year_present = "2023"
     data_part = f"""
     ----- DATA QUERY -----
     SELECT * FROM uri)
-
     SELECT * from cosa
     WHERE business_day not in {list_values}
-    AND CAST(business_day as INT64) >= CAST({date_start} AS INT64)
+    AND CAST(business_day as STRING) like CONCAT({year_present},CAST({month_str} AS STRING),"%")
     ORDER BY CAST(business_day as INT64) asc, CAST(order_number as INT64) asc,CAST(occurrence_number as INT64) asc
     """
 
