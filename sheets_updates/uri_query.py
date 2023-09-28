@@ -19,7 +19,7 @@ def delete_if_exist(month,year=2023):
     client = bigquery.Client()
     query = f"""
     ----- query for getting the price year_month ------
-    DELETE `{DATASET}.{PRODUCT_3}`
+    DELETE `{DATASET}.{PRODUCT_M}`
     WHERE CAST(year_month AS STRING) = '{year}{month_str}'
     """
 
@@ -39,7 +39,7 @@ def get_prices_year_db(month,year=2023):
     query = f"""
     ----- query for getting the price year_month ------
     SELECT distinct year_month
-    FROM `{DATASET}.{PRODUCT_3}`
+    FROM `{DATASET}.{PRODUCT_M}`
     WHERE CAST(year_month AS STRING) = '{year}{month_str}'
     """
 
@@ -94,6 +94,8 @@ def get_prices_sh(sheet_name):
     "back":"int64",
     "year_month":"int64"
     }
+    ### Clean the data
+
     for col in integer_cols.keys():
         df[col] = df[col].map(lambda x: x.replace(",","").replace(" ","") if isinstance(x,str) else x)
         df[col] = df[col].map(lambda x: 0 if isinstance(x,str) and x == "" else x)
@@ -102,6 +104,8 @@ def get_prices_sh(sheet_name):
         print("a")
         if col not in integer_cols.keys():
             df[col] = df[col].map(lambda x: None if isinstance(x,str) and x == "" else x)
+
+    ### Check if the year_month is already in the database
     ym_values_df = df["year_month"].unique()
     already_up = get_prices_year_db(month=9)
     try:
@@ -134,6 +138,7 @@ def get_query(existing_values,month="09",type_sh="undefined"):
     list_values = f"""({','.join([f"'{val}'" for val in existing_values])})"""
     if list_values == '()':
         list_values = "('')"
+
     use_new = get_prices_sh("new")
 
     if use_new == False:
