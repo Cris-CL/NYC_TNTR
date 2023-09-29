@@ -10,6 +10,19 @@ from goukei_shosai import gs_jp_en
 from nippo import nippo_jp_en
 
 
+def clean_dict(dict_in):
+    dict_out = {}
+    for key in dict_in.keys():
+        new_key = key.replace(" ","")
+        dict_out[new_key] = dict_in[key]
+    return dict_out
+
+assis_jp_en = clean_dict(assis_jp_en)
+gd_jp_en = clean_dict(gd_jp_en)
+gs_jp_en = clean_dict(gs_jp_en)
+nippo_jp_en = clean_dict(nippo_jp_en)
+
+
 def get_timestamp(timezone_name):
   dt = datetime.now(pytz.timezone(timezone_name))
   timestamp = dt.strftime(("%Y-%m-%d %H:%M:%S"))
@@ -236,6 +249,7 @@ def load_file(uri,file_name):
     try:
         if file_type == "assis":
             df = pd.read_excel(file_path,index_col=False,skipfooter=1,engine="openpyxl")
+            df.columns = [col_wrong.replace(" ","") for col_wrong in df.columns]
             df = df[assis_jp_en.keys()]
             df.columns = [assis_jp_en[col] for col in df.columns]
             df = clean_assis(df)
@@ -248,6 +262,7 @@ def load_file(uri,file_name):
 
         elif file_type == "nippo":
             df = pd.read_excel(file_path,index_col=False,skipfooter=2,engine="openpyxl")
+            df.columns = [col_wrong.replace(" ","") for col_wrong in df.columns]
             df = df[nippo_jp_en.keys()]
             df.columns = [nippo_jp_en[col] for col in df.columns]
             df = clean_nippo(df)
@@ -259,6 +274,7 @@ def load_file(uri,file_name):
 
         elif file_type == "shosai":
             df = pd.read_excel(file_path,index_col=False,engine="openpyxl")
+            df.columns = [col_wrong.replace(" ","") for col_wrong in df.columns]
             df = df[gs_jp_en.keys()]
             df.columns = [gs_jp_en[col] for col in df.columns]
             df = clean_shosai(df)
@@ -269,6 +285,7 @@ def load_file(uri,file_name):
 
         elif file_type == "goukei_data":
             df = pd.read_excel(file_path,index_col=False,skiprows=5,engine="openpyxl")
+            df.columns = [col_wrong.replace(" ","") for col_wrong in df.columns]
             df = df[gd_jp_en.keys()]
             df.columns = [gd_jp_en[col] for col in df.columns]
             df = clean_goukei_data(df)
