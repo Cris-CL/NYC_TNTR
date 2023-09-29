@@ -41,7 +41,7 @@ def update_uri_sheet(matching_column=1,start_date=0,sheet_type="uri"):
     # Append the new data to the worksheet
 
     if new_data:
-        worksheet.append_rows(new_data,value_input_option="RAW")
+        worksheet.append_rows(new_data,value_input_option="USER_ENTERED")
         print(f"Appended {len(new_data)} new rows to {worksheet_name}.")
     else:
         print("No new data to append.")
