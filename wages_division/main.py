@@ -1,7 +1,7 @@
 # functions-framework==3.*
 # flask==2.2.2
 from flask import Flask, request, jsonify
-from process import main_process
+from process import main_process,process_sheets_from_master
 
 app = Flask(__name__)
 @app.route('/process_sheet', methods=['POST','GET'])
@@ -20,7 +20,8 @@ def process_sheet(request):
       month = posted_data["month"]
       print(month)
 
-      main_process(hostess_name,month)
+      # main_process(hostess_name,month)
+      process_sheets_from_master(month)
     except Exception as e:
       print(e)
       http_status='',400

@@ -21,7 +21,7 @@ def get_comission_list(month,year=2023):
     SELECT distinct nomenclatore as code
     FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_3}`
     WHERE nomenclatore is not null
-    AND CAST(year_month AS STRING) = {year}{month_str}
+    AND CAST(year_month AS STRING) = '{year}{month_str}'
     """
 
     try:

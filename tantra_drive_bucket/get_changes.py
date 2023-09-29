@@ -92,8 +92,7 @@ def fetch_changes_specific(saved_start_page_token,drive_id,creds=None):
     """
     print("fetching changes")
     if not creds:
-        print('You must specify credentials.')
-        return
+        creds, _ = google.auth.default()
     try:
         # create drive api client
         service = build('drive', 'v3', credentials=creds)
@@ -109,14 +108,14 @@ def fetch_changes_specific(saved_start_page_token,drive_id,creds=None):
                                               spaces='drive',driveId=drive_id,includeItemsFromAllDrives=True,supportsAllDrives=True).execute()
             for change in response.get('changes'):
                 # Process change
-                print(F'Change found for file: {change.get("fileId")}')
+                print(f'Change found for file: {change.get("file",{}).get("name","Unknown")}')
             if 'newStartPageToken' in response:
                 # Last page, save this token for the next polling interval
                 saved_start_page_token = response.get('newStartPageToken')
             page_token = response.get('nextPageToken')
 
     except HttpError as error:
-        print(F'An error occurred: {error}')
+        print(f'An error occurred: {error}')
         saved_start_page_token = None
 
     return saved_start_page_token, response

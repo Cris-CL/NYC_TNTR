@@ -217,19 +217,21 @@ def get_query(existing_values,month="09",type_sh="undefined"):
     *,
     CASE
       WHEN joined.product_name = '割引額（税サ込み）' THEN total_amount/1.1
+      WHEN joined.product_name like 'Tip%ON%' THEN total_amount/1.1
       ELSE total_amount
     END as AMOUNT,
 
     CASE
       WHEN joined.product_name = '割引額（税サ込み）' THEN 0
-      WHEN joined.product_name like '%ON)' THEN 0
+      WHEN joined.product_name like 'Tip%ON%' THEN 0
       ELSE total_amount*0.2
     END AS SERVICE,
 
     CASE
       WHEN joined.product_name = '割引額（税サ込み）' THEN (total_amount/1.1)*0.1
-      WHEN joined.product_name not like '%ON)' THEN (total_amount*0.2+total_amount)*0.1
-      WHEN joined.product_name like '%ON)' THEN (total_amount)*0.1
+      WHEN joined.product_name like 'Tip%ON%' THEN (total_amount/1.1)*0.1
+      WHEN joined.product_name not like '%.ON' THEN (total_amount*0.2+total_amount)*0.1
+      WHEN joined.product_name like '%.ON' THEN (total_amount)*0.1
       ELSE 0
       -- ELSE total_amount*0.2
     END AS VAT,
