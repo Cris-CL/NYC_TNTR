@@ -152,6 +152,7 @@ def format_worksheet(worksheet):
             else:
                 print("problem with formatting")
                 raise
+
     return
 
 def clean_cell(unit_cell):
@@ -228,8 +229,11 @@ def update_google_sheets_with_retry(results_df, sh, hostess_name):
                     raise  # Re-raise the exception if it's not a rate limit error
 
 def update_all_sheets(results_df, sh_hostess_dict, month):
-
-    list_hostess = sh_hostess_dict.keys()
+    list_hostess = list(sh_hostess_dict.keys())
+    try:
+      list_hostess.remove("店")
+    except:
+      print("店 not in the file")
     for name in list_hostess:
         while True:  ### This is to retry in case of API rate limit exceeded
             try:
@@ -246,9 +250,12 @@ def update_all_sheets(results_df, sh_hostess_dict, month):
 
                 sheets = [sht_name.title for sht_name in sh.worksheets()]
 
-                new_sheet_name = f"{year}{month}"
+                year = 2023 ## TODO change this to a environment variable or another way to get the year
+                month_str = (2-len(str(month)))*"0" + str(month) ## Add a zero if the month is less than 10
+
+                new_sheet_name = f"{year}{month_str}"
+
                 if new_sheet_name not in sheets: ### HERE WE NEED TO CHECK IF THE MONTH IS ALREADY THERE
-                    year = 2023 ## TODO change this to a environment variable or another way to get the year
                     active_worksheet = sh.add_worksheet(
                         title=new_sheet_name,
                         rows=str(df_temp.shape[0]),
@@ -279,6 +286,7 @@ def update_all_sheets(results_df, sh_hostess_dict, month):
                 except Exception as e:
                     print(f"Couldn't format {name} Sheet")
                     print(e)
+                return print("finished test run")
                 break  # Exit the retry loop if successful
             except Exception as e:
                 if "RATE_LIMIT_EXCEEDED" in str(e):
@@ -310,7 +318,7 @@ def process_sheets_from_master(month):
 
     hostess_dict = get_hostess_dict(MASTER_SPREADSHEET_ID)
     results_df = get_dataframe(month=month,year=2023)
-    update_all_sheets(results_df,hostess_dict)
+    update_all_sheets(results_df,hostess_dict,month)
     print(f"Finished processing all hostess for the month {month}")
 
     return
