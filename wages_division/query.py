@@ -11,14 +11,9 @@ PRODUCT_1 = os.environ["PRODUCT_1"]
 PRODUCT_2 = os.environ["PRODUCT_2"]
 PRODUCT_3 = os.environ["PRODUCT_3"]
 
-        #   SELECT
-        #   CAST(product_code as STRING) as product_code,
-        #   nomenclatore as code,
-        #   CAST(back as INT64) as commission,
-        #   year_month
-        #   FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_3}`
 
 def get_comission_list(month,year=2023):
+    month_str = (2-len(str(month)))*"0" + str(month) ## Add a zero if the month is less than 10
 
     client = bigquery.Client()
     query = f"""
@@ -26,8 +21,9 @@ def get_comission_list(month,year=2023):
     SELECT distinct nomenclatore as code
     FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_3}`
     WHERE nomenclatore is not null
-
+    AND CAST(year_month AS STRING) = {year}{month_str}
     """
+
     try:
         query_job = client.query(query)
         results = query_job.result()
@@ -42,8 +38,6 @@ def get_comission_list(month,year=2023):
 def create_query(month,year=2023):
 
     lis_comission = get_comission_list(month,year)
-
-
     full_query = f"""WITH part_one as (
     ----------------START PART ONE----------------
     WITH wages as (with assist as (SELECT DISTINCT
