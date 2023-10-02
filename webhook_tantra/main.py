@@ -25,6 +25,14 @@ def webhook(request):
     print(f"GMT Time of request {gmt_timestamp}")
     print(f"Japan Time of request {jap_timestamp}")
     print(posted_data)
+
+    ### If the message receibed is of a sync, return a success status and finish
+
+    if posted_data[4][1]=="sync":
+      http_status=jsonify({'status':'success'}),200
+      print(f"Webhook started at: {jap_timestamp}")
+      return http_status
+
     cur_date=jap_timestamp
     print("Date and time of update ====>",cur_date)
     http_status=jsonify({'status':'success'}),200
