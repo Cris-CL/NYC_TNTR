@@ -3,6 +3,8 @@ import gspread
 import pandas as pd
 import google.auth
 from google.cloud import bigquery
+from dotenv import load_dotenv
+load_dotenv()
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 DATASET = os.environ["DATASET"]
@@ -199,16 +201,18 @@ def get_query(existing_values,month="09",type_sh="undefined"):
         ) as prod on sh.order_code = prod.product_code
 --            AND sh.year_month LIKE CONCAT(prod.year_month,'%')
         LEFT JOIN (
-          SELECT distinct
-          CAST(order_number as STRING) as order_number_gd,
-          CAST(business_day as STRING) as business_str,
-          table_name,
-          correction_amount,
-          paid_amount,
-          credit_paid_amount,
-          cash_paid_amount
+        SELECT distinct
+        CAST(order_number as STRING) as order_number_gd,
+        CAST(business_day as STRING) as business_str,
+        table_name,
+        SUM(correction_amount) as correction_amount,
+        SUM(paid_amount) as paid_amount,
+        SUM(credit_paid_amount) as credit_paid_amount,
+        SUM(cash_paid_amount) as cash_paid_amount
 
-          from `{DATASET}.{TABLE_4}` ) ---- Correct bq table name to work with this query
+          from `{DATASET}.{TABLE_4}`
+
+          ) ---- Correct bq table name to work with this query
           as gd on sh.order_number = gd.order_number_gd and gd.business_str = sh.business_day
 
     )
@@ -294,9 +298,9 @@ def get_query(existing_values,month="09",type_sh="undefined"):
     SALES_SUBTOTAL,
     SERVICE_CHARGE,
     SALES_VAT,
-    CASE WHEN occurrence_number = 1 THEN SUM(SALES_SUBTOTAL)
+    CASE WHEN occurrence_number = 1 THEN SUM(SALES_SUBTOTAL + SERVICE_CHARGE + SALES_VAT)
     ELSE NULL
-    END AS TOTAL,
+    END AS TOTAL, ---- Change total calculation
     CASE WHEN occurrence_number = 1 THEN PAID_AMOUNT-(SALES_SUBTOTAL+SERVICE_CHARGE+SALES_VAT)
     ELSE NULL
     END AS ADJUST,
