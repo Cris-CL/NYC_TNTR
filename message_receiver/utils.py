@@ -82,18 +82,29 @@ def correct_date_nippo(df,month):
         )
     return df.copy()
 
+def get_name_from_order(df):
+    def extract_info(text):
+        match = re.search(r'\((.*?)\)', text)
+        return match.group(1) if match else ''
+
+    df['cp_in_charge'] = df.apply(lambda row: extract_info(row['product_name']) if pd.isna(row['cp_in_charge']) or row['cp_in_charge'] == '' else row['cp_in_charge'], axis=1)
+    df['cp_bottle'] = df.apply(lambda row: extract_info(row['product_name']) if pd.isna(row['cp_bottle']) or row['cp_bottle'] == '' else row['cp_bottle'], axis=1)
+    return df.copy()
+
 
 def get_shared_bottle(df):
     """"
     input: goukei shosai df
     output: goukei shosai df with shared bottle column and  cp_bottle column as list
     """
+
+    ##### CHANGE HERE cp_in_charge instead of cp_bottle
     ## the next line is to make sure that the cp_bottle column is a list
-    df["shared_bottle"] = df["cp_bottle"].map(lambda x:
-                                          x if type(x) == type([]) else
-                                          x.split(",") if type(x)==type("") and "," in x else
-                                          None if type(x)==type(0.1) else [x] if x != None else None).map(
-                                              lambda x: len(x) if type(x) == type([]) else 1)
+    df["shared_bottle"] = df["cp_in_charge"].map(lambda x:
+                                          x if isinstance(x,list) else
+                                          x.split(",") if isinstance(x,str) and "," in x else
+                                          None if isinstance(x,float) else [x] if x != None else None).map(
+                                              lambda x: len(x) if isinstance(x,list) else 1)
 
     return df.copy()
 
@@ -113,7 +124,7 @@ def fix_time_assis(df):
         else:
             return x
     for col in columns_time:
-        df[col] = df[col].map(lambda x: x.replace(".0","") if type(x) == type("") else x)
+        df[col] = df[col].map(lambda x: x.replace(".0","").replace('2400','0000') if isinstance(x,str) else x)
         df[col] = df[col].map(fix_time)
     return df.copy()
 
@@ -133,6 +144,8 @@ def add_date_to_df(df):
 
 def identify_file(file_name):
     lower_file_name = file_name.lower()
+    if len(lower_file_name) != 21:
+        return "unknown"
     if "ass" in lower_file_name:
         return "assis"
     elif "nippo" in lower_file_name:
@@ -190,7 +203,7 @@ def clean_nippo(df):
     df = df.astype({'day':'int64'})
 
     for col in ni_str_col.keys():
-        df[col] = df[col].apply(lambda x: None if type(x) == type("") and x in [
+        df[col] = df[col].apply(lambda x: None if isinstance(x,str) and x in [
             "nan","none","NAN","NaN",""," "
             ] else x)
     return df.copy()
@@ -210,7 +223,7 @@ def clean_shosai(df):
     df = df.astype({
     col:gs_str_col.get(col,"float64") for col in df.columns})
     for col in gs_str_col.keys():
-        df[col] = df[col].apply(lambda x: None if type(x)==type("") and x in[
+        df[col] = df[col].apply(lambda x: None if isinstance(x,str) and x in[
             "nan","none","NAN","NaN",""," "] else x)
     return df.copy()
 
@@ -234,7 +247,7 @@ def clean_goukei_data(df):
     df["hostess_name"] = df["hostess_name"].map(str)
 
     for col_str in gd_str_col.keys():
-        df[col_str] = df[col_str].apply(lambda x: None if type(x) == type("") and x.lower().replace(" ","") in [
+        df[col_str] = df[col_str].apply(lambda x: None if isinstance(x,str) and x.lower().replace(" ","") in [
             "nan","none","NAN","NaN",""," "
             ] else x)
     return df.copy()
@@ -278,6 +291,7 @@ def load_file(uri,file_name):
             df = df[gs_jp_en.keys()]
             df.columns = [gs_jp_en[col] for col in df.columns]
             df = clean_shosai(df)
+            df = get_name_from_order(df)
             df = get_shared_bottle(df)
             df = add_file_name_to_df(df,file_name)
             df = add_date_to_df(df)
@@ -344,10 +358,15 @@ def file_exist_already(file_name,dataset,table,row):
         query = f"""
         DELETE `{dataset}.{table}`
         WHERE {row} = '{file_name}'
+        AND CAST(DATE_UPLOADED AS DATETIME) < (
+            SELECT MAX(CAST(DATE_UPLOADED AS DATETIME))
+            FROM `{dataset}.{table}`
+            WHERE {row} = '{file_name}'
+        )
         """
         delete_job = client.query(query)
         delete_job.result()
-        print(f"{file_name} deleted from {table}")
+        print(f"{file_name} updated from {table}")
     return
 
 # df_1.to_gbq(destination_table=f'{dataset_id}.{table_1}',if_exists='append',progress_bar=False)
@@ -426,9 +445,6 @@ def full_upload_process(df,file_name):
         print("Error in full_upload_process check step")
         print(e)
     if check == True:
-
-        file_exist_already(file_name,DATASET,table_upload,row)
-
         timestamp = get_timestamp("Asia/Tokyo").replace(" ","_").replace("-","_").replace(":","_")
         new_file_name = f'{file_name.split(".")[0]}_{timestamp}.xlsx'
         try:
@@ -445,6 +461,7 @@ def full_upload_process(df,file_name):
             print(e)
     dataset_table = f"{DATASET}.{table_upload}"
     upload_bq(df,dataset_table,PROJECT_ID)
+    file_exist_already(file_name,DATASET,table_upload,row)
     print(f"File {file_name} uploaded to {table_upload}")
     save_processed_file(df,file_name)
     return
