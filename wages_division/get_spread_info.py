@@ -15,9 +15,9 @@ def get_hostess_dict(master_id):
         worksheet = nyc_master_hostess_data.worksheet(worksheet_name)
 
         a_col = worksheet.get_values("A2:A")
-        n_col = worksheet.get_values("N2:N")
+        p_col = worksheet.get_values("P2:P")
 
-        hostes_dict = {A[0]:N[0] for A,N in zip(a_col,n_col)}
+        hostes_dict = {A[0]:P[0] for A,P in zip(a_col,p_col)}
     except Exception as e:
         print(e)
         return False

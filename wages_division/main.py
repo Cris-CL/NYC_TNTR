@@ -1,7 +1,7 @@
 # functions-framework==3.*
 # flask==2.2.2
 from flask import Flask, request, jsonify
-from process import main_process,process_sheets_from_master
+from process import process_sheets_from_master
 
 app = Flask(__name__)
 @app.route('/process_sheet', methods=['POST','GET'])
