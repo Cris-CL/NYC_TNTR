@@ -2,6 +2,7 @@ import os
 from get_last_token import get_token
 from get_changes import fetch_changes,changes_to_df,df_to_dict,changes_to_bq,fetch_changes_specific
 from move_file import transfer_file_between_drive_and_gcs
+from datetime import datetime
 
 PROJECT_ID = os.environ.get("PROJECT_ID")
 DATASET = os.environ.get("DATASET")
@@ -32,9 +33,17 @@ def full_process():
   dict_changes = df_to_dict(df_changes) ## make a dict with the file names and file id for looping later
 
   ## Move files from the drive folder to the bucket
+  today_date = datetime.now().date()
   for index, row in df_changes.iterrows():
     file_name = row['file_name']
     file_id = row['fileid']
+    try:
+      time_stamp = row['time'].date()
+      if time_stamp != today_date:
+        continue
+    except Exception as e:
+      print(e)
+
     print(f'File Name: {file_name}, File ID: {file_id}')
     if isinstance(file_name, str) and '.xlsx' in file_name:
       print(f"Moving {file_name} id: {file_id}")

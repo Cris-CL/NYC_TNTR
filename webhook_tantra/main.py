@@ -1,6 +1,9 @@
-# functions-framework==3.*
-# flask==2.2.2
+# functions-framework==3.4.0
+# flask==2.2.3
+# Werkzeug==2.3.7
 # pytz
+# requests
+
 from datetime import datetime
 from flask import Flask, request, jsonify
 import pytz
@@ -30,7 +33,6 @@ def webhook(request):
 
     if posted_data[4][1]=="sync":
       http_status=jsonify({'status':'success'}),200
-      print(f"Webhook started at: {jap_timestamp}")
       return http_status
 
     cur_date=jap_timestamp

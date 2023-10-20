@@ -64,27 +64,14 @@ def get_query(existing_values,date_start=0,type_sh="undefined"):
         from `{DATASET}.{TABLE_3}` as sh
         LEFT JOIN (
         ------ here probably need to change when we define the correct commission table
---          SELECT
---          product_code,
---          CODE as code,
---          CAST(back as INT64) as commission
---          FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_1}`
---          UNION ALL
-
---          SELECT
---          set_code as product_code,
---          CODE as code,
---          CAST(REF_1 as INT64) as commission
---          FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_2}`
-
           SELECT
           CAST(product_code as STRING) as product_code,
           nomenclatore as code,
           CAST(back as INT64) as commission,
-          year_month
+          CAST(year_month as STRING) as YEAR_MONTH
           FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_3}`
-
-        ) as prod on sh.order_code = prod.product_code
+          WHERE UPLOADED IN (SELECT uploaded_max FROM (SELECT year_month,MAX(UPLOADED) as uploaded_max FROM `{PROJECT_ID}.{DATASET}.{PRODUCT_3}` group by year_month))
+        ) as prod on sh.order_code = prod.product_code AND sh.business_day LIKE CONCAT(prod.YEAR_MONTH,'%')
         LEFT JOIN (
           SELECT distinct
           CAST(order_number as STRING) as order_number_gd,

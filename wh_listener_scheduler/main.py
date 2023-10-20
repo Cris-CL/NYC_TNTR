@@ -31,10 +31,10 @@ def setup_shared_folder_webhook(shared_folder_id, week_factor=0, test_var=True,d
 
     #### this is the timestamp of the current time in miliseconds
     now = int(datetime.utcnow().timestamp()*1e3)
-    print(now)
-
-    expiration = now + weeks * week_factor - 1 * minutes + day_factor*days # 9 hours to account for time zone difference
-    print(expiration)
+    # print(now)
+    h_factor = 7
+    expiration = now + weeks * week_factor - 1 * minutes + day_factor*days + hours*h_factor # 9 hours to account for time zone difference
+    # print(expiration)
 
     # Create a watch request
     id_gen = str(uuid.uuid4())
@@ -50,5 +50,5 @@ def setup_shared_folder_webhook(shared_folder_id, week_factor=0, test_var=True,d
     return
 
 def starter(data, context):
-    setup_shared_folder_webhook(shared_folder_id=SHARE_FOLDER_ID,week_factor=0,day_factor=1,test_var=False)
+    setup_shared_folder_webhook(shared_folder_id=SHARE_FOLDER_ID,week_factor=0,day_factor=2,test_var=False)
     return
