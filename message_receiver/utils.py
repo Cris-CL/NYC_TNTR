@@ -141,27 +141,34 @@ def add_date_to_df(df):
     df = df.astype({"DATE_UPLOADED":"str"})
     return df.copy()
 
+def is_valid_filename(filename):
+
+    pattern = r'^NYC_\d{8}_(ASS|GSH|GDT)\.xlsx$'
+    if re.match(pattern, filename):
+        return True
+    else:
+        return False
+
 
 def identify_file(file_name):
     lower_file_name = file_name.lower()
-    if len(lower_file_name) != 21:
-        return "unknown"
-    if "ass" in lower_file_name:
-        return "assis"
-    elif "nippo" in lower_file_name:
-        return "nippo"
-    elif "gsh" in lower_file_name or "ghs" in lower_file_name:
-        return "shosai"
-    elif "gdt" in lower_file_name or "gtd" in lower_file_name:
-        return "goukei_data"
-    elif "assis" in lower_file_name:
-        return "assis"
-    elif "nippo" in lower_file_name:
-        return "nippo"
-    elif "goukei sh" in lower_file_name:
-        return "shosai"
-    elif "goukei d" in lower_file_name:
-        return "goukei_data"
+    if is_valid_filename(file_name):
+        if "ass" in lower_file_name:
+            return "assis"
+        elif "nippo" in lower_file_name:
+            return "nippo"
+        elif "gsh" in lower_file_name or "ghs" in lower_file_name:
+            return "shosai"
+        elif "gdt" in lower_file_name or "gtd" in lower_file_name:
+            return "goukei_data"
+        elif "assis" in lower_file_name:
+            return "assis"
+        elif "nippo" in lower_file_name:
+            return "nippo"
+        elif "goukei sh" in lower_file_name:
+            return "shosai"
+        elif "goukei d" in lower_file_name:
+            return "goukei_data"
     else:
         return "unknown"
 
