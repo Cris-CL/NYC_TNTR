@@ -1,19 +1,5 @@
 # functions-framework==3.*
-# pytz
-# google-cloud-bigquery==3.3.5
-# fsspec==2022.11.0
-# gcsfs==2022.11.0
-# gspread==5.7.2
-# pandas-gbq==0.17.9
-# numpy==1.23.4
-# openpyxl==3.0.10
-# pyarrow>=9.0.0
-# flask==2.2.3
-# Werkzeug==2.3.7
-# requests
-# pandas==1.5.1
-
-
+# flask==2.2.2
 from flask import Flask, request, jsonify
 
 
@@ -50,6 +36,10 @@ def update_master(request):
           update_prices(sheet_name)
         except Exception as e:
           print(e)
+      if posted_data['type']=="online":
+        from online_orders import update_online_sales
+        print("Updating online orders")
+        update_online_sales("Transfer")
     except Exception as e:
       print(e)
       http_status='',400
