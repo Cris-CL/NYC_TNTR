@@ -10,3 +10,4 @@ functions/test.py
 **/test.py
 *.ipynb
 *.csv
+queries/

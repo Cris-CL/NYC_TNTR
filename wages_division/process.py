@@ -13,7 +13,16 @@ from new_query import create_new_query
 from get_spread_info import get_hostess_dict
 import locale
 import calendar
+import datetime
 
+def reverse_list_odd_date(lst):
+    current_date = datetime.datetime.now().day
+
+    if current_date % 2 == 0:
+        return lst
+    else:
+        reversed_list = list(reversed(lst))
+        return reversed_list
 
 def get_spreadsheet(spreadsheet_name=None, spreadsheet_id=None):
     # Specify the Google Sheets document and worksheet
@@ -364,7 +373,10 @@ def calc_totals_nrws(worksheet, year, month):
 
 def update_all_sheets(results_df, sh_hostess_dict, month):
     list_hostess = list(sh_hostess_dict.keys())
+    list_hostess = reverse_list_odd_date(list_hostess)
+    print(f"Processing all {len(list_hostess)} hostess")
     waiting_time = 10
+    names_not_updated = []
     try:
         list_hostess.remove("店")
     except:
@@ -451,16 +463,34 @@ def update_all_sheets(results_df, sh_hostess_dict, month):
                     waiting_time = waiting_time + 5
                 else:
                     print(f"Some other error ocurred while processing {name}")
+                    names_not_updated.append(name)
                     print(e)
                     break
                     # raise  # Re-raise the exception if it's not a rate limit error
+    try:
+        if len(names_not_updated) > 0:
+            print(
+                f'Couldnt update the following people: {" ,".join(names_not_updated)}'
+            )
+    except Exception as e:
+        print(e)
 
 
-def process_sheets_from_master(month):
+def process_sheets_from_master(month,host_names='All'):
     MASTER_SPREADSHEET_ID = os.environ["MASTER_SPREADSHEET_ID"]
 
     hostess_dict = get_hostess_dict(MASTER_SPREADSHEET_ID)
+    if host_names != 'All':
+      try:
+        lis_names = host_names.replace("[","").replace("]","").replace("'","").replace(" ","").split(",")
+        hostess_dict = {name_sing:hostess_dict.get(name_sing,"") for name_sing in lis_names}
+      except:
+        print("Couldn't process individual names")
+
+
     results_df = get_dataframe(month=month, year=2023)
+    if len(results_df) < 1:
+        print(f"No new data for the current month: {month} ")
     update_all_sheets(results_df, hostess_dict, month)
     print(f"Finished processing all hostess for the month {month}")
 
