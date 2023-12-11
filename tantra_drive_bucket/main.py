@@ -8,7 +8,6 @@
 # pandas-gbq==0.17.9
 # numpy==1.23.4
 # google-api-python-client==2.86.0
-# Werkzeug==2.3.7
 
 from datetime import datetime
 from flask import Flask, request, jsonify
