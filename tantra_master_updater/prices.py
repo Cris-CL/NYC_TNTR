@@ -6,7 +6,7 @@ from datetime import datetime
 from google.cloud import bigquery
 
 PROJECT_ID = os.environ["PROJECT_ID"]
-PRICES_SHEET_ID = os.environ["SHEET_ID"]
+PRICES_SHEET_ID = os.environ["PRICES_SHEET_ID"]
 DATASET = os.environ["DATASET"]
 PRODUCT_M = os.environ["PRODUCT_M"]
 
