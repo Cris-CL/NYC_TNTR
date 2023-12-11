@@ -16,12 +16,20 @@ def process_sheet(request):
       print(posted_data)
 
       hostess_name = posted_data["name"]
+
       print(hostess_name)
+      if hostess_name == 'Test':
+        print('Test')
+        return '<h1>Test run correctly</h1>'
       month = posted_data["month"]
       print(month)
 
       # main_process(hostess_name,month)
-      process_sheets_from_master(month)
+
+      if hostess_name == 'All':
+        process_sheets_from_master(month,hostess_name)
+      elif "[" in hostess_name:
+        print("placeholder")
     except Exception as e:
       print(e)
       http_status='',400
