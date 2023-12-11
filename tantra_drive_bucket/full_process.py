@@ -24,11 +24,12 @@ def full_process():
   new_token,changes = fetch_changes_specific(saved_start_page_token=last_token,drive_id=DRIVE_ID) ## get new changes from last time
 
   df_changes = changes_to_df(new_token,changes) ## Put the changes info in a dataframe
-  df_changes.sort_values(by='time', inplace=True, ascending=True) ## Sort the dataframe in ascending order by the time of modification
-
-  if isinstance(df_changes,bool) == True:
+  if isinstance(df_changes,bool):
     print("There is no new data")
     return
+
+  df_changes.sort_values(by='time', inplace=True, ascending=True) ## Sort the dataframe in ascending order by the time of modification
+
 
   dict_changes = df_to_dict(df_changes) ## make a dict with the file names and file id for looping later
 
