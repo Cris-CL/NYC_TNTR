@@ -14,6 +14,36 @@ from get_spread_info import get_hostess_dict
 import locale
 import calendar
 import datetime
+import json
+import requests
+from google.cloud import storage
+
+
+def write_failed_sheets_to_json(bucket_name, file_name, names, year, month):
+    failed_sheets = {
+        "type": "retry",
+        "attempt": 1,
+        "year": year,
+        "month": month,
+        "names": names
+    }
+    headers = {'Content-Type': 'application/json'}
+    TEST_FUNCTION = os.environ["TEST_FUNCTION"]
+    try:
+      print("Sending request to test function url")
+      requests.post(TEST_FUNCTION, json=failed_sheets, headers=headers)
+    except Exception as e:
+      print(e)
+    save_json_to_bucket(bucket_name, file_name, failed_sheets)
+    return
+
+def save_json_to_bucket(bucket_name, file_name, data):
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(file_name)
+    blob.upload_from_string(json.dumps(data, indent=2))
+    return
+
 
 def reverse_list_odd_date(lst):
     current_date = datetime.datetime.now().day
@@ -23,6 +53,7 @@ def reverse_list_odd_date(lst):
     else:
         reversed_list = list(reversed(lst))
         return reversed_list
+
 
 def get_spreadsheet(spreadsheet_name=None, spreadsheet_id=None):
     # Specify the Google Sheets document and worksheet
@@ -450,7 +481,7 @@ def update_all_sheets(results_df, sh_hostess_dict, month):
                     print(f"Couldn't format {name} Sheet")
                     print(e)
                 # return print("finished test run")
-                sleep(5)
+                sleep(6)
                 break  # Exit the retry loop if successful
             except Exception as e:
                 if "RATE_LIMIT_EXCEEDED" in str(e):
@@ -472,11 +503,12 @@ def update_all_sheets(results_df, sh_hostess_dict, month):
             print(
                 f'Couldnt update the following people: {" ,".join(names_not_updated)}'
             )
+            return names_not_updated
     except Exception as e:
-        print(e)
+        print(e,type(e))
 
 
-def process_sheets_from_master(month,host_names='All'):
+def process_sheets_from_master(month,year_process,host_names='All'):
     MASTER_SPREADSHEET_ID = os.environ["MASTER_SPREADSHEET_ID"]
 
     hostess_dict = get_hostess_dict(MASTER_SPREADSHEET_ID)
@@ -488,10 +520,23 @@ def process_sheets_from_master(month,host_names='All'):
         print("Couldn't process individual names")
 
 
-    results_df = get_dataframe(month=month, year=2023)
+    results_df = get_dataframe(month=month, year=year_process)
+    try:
+      names_in_df = results_df["hostess_name"].unique().tolist()
+      hostess_dict = {k:hostess_dict[k] for k in names_in_df if k in hostess_dict.keys()}
+    except Exception as e:
+      print(f"Error while getting current df names: {e}")
+      hostess_dict = get_hostess_dict(MASTER_SPREADSHEET_ID)
+
     if len(results_df) < 1:
-        print(f"No new data for the current month: {month} ")
-    update_all_sheets(results_df, hostess_dict, month)
+        return print(f"No new data for the current month: {month} ")
+    names_not_updated = update_all_sheets(results_df, hostess_dict, month)
+    if isinstance(names_not_updated,list):
+      print("Some updates failed, sending retry notice")
+      BUCKET_RETRY = os.environ["BUCKET_RETRY"]
+      today_date = datetime.date.today().strftime("%Y_%m_%d")
+      file_name = f'failed_process_{today_date}_{year_process}{month}.json'
+      write_failed_sheets_to_json(BUCKET_RETRY, file_name, names_not_updated, year_process, month)
     print(f"Finished processing all hostess for the month {month}")
 
     return
