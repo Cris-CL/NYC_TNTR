@@ -8,10 +8,8 @@ import google.auth
 from google.cloud import bigquery
 import gspread
 from time import sleep
-from query import create_query
 from new_query import create_new_query
 from get_spread_info import get_hostess_dict
-import locale
 import calendar
 import datetime
 import json
