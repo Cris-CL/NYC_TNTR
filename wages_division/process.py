@@ -3,20 +3,24 @@
 # gspread==5.7.2
 
 import os
-import pandas as pd
-import google.auth
-from google.cloud import bigquery
-import gspread
-from time import sleep
-from query import create_query
-from new_query import create_new_query
-from get_spread_info import get_hostess_dict
-import locale
 import calendar
 import datetime
 import json
 import requests
+from time import sleep
+
+import pandas as pd
+import google.auth
+from google.cloud import bigquery
 from google.cloud import storage
+import gspread
+
+from new_query import create_new_query
+from get_spread_info import get_hostess_dict
+
+#### Constants
+WAITING_TIME_BASE = 5
+WAITING_TIME_DOUBLE = 10
 
 
 def write_failed_sheets_to_json(bucket_name, file_name, names, year, month):
@@ -25,17 +29,18 @@ def write_failed_sheets_to_json(bucket_name, file_name, names, year, month):
         "attempt": 1,
         "year": year,
         "month": month,
-        "names": names
+        "names": names,
     }
-    headers = {'Content-Type': 'application/json'}
+    headers = {"Content-Type": "application/json"}
     TEST_FUNCTION = os.environ["TEST_FUNCTION"]
     try:
-      print("Sending request to test function url")
-      requests.post(TEST_FUNCTION, json=failed_sheets, headers=headers)
+        print("Sending request to test function url")
+        requests.post(TEST_FUNCTION, json=failed_sheets, headers=headers)
     except Exception as e:
-      print(e)
+        print(e)
     save_json_to_bucket(bucket_name, file_name, failed_sheets)
     return
+
 
 def save_json_to_bucket(bucket_name, file_name, data):
     client = storage.Client()
@@ -139,7 +144,7 @@ def get_specific_hostess_df(df, hostess_name):
 
 
 def format_worksheet(worksheet):
-    format_waiting = 5
+    format_waiting = WAITING_TIME_BASE
 
     cell_types = {
         "number": {"numberFormat": {"type": "NUMBER", "pattern": "0"}},
@@ -264,7 +269,7 @@ def resize_columns(FILE, sheet_name):
                 print(
                     f"API rate limit exceeded. Waiting 5 and retrying formatting {sheet_name} sheet"
                 )
-                sleep(5)
+                sleep(WAITING_TIME_BASE)
             else:
                 print(e)
                 print(f"Couldnt resize the sheet {sheet_name}")
@@ -406,7 +411,7 @@ def update_all_sheets(results_df, sh_hostess_dict, month):
     list_hostess = list(sh_hostess_dict.keys())
     list_hostess = reverse_list_odd_date(list_hostess)
     print(f"Processing all {len(list_hostess)} hostess")
-    waiting_time = 10
+
     names_not_updated = []
     try:
         list_hostess.remove("店")
@@ -481,17 +486,17 @@ def update_all_sheets(results_df, sh_hostess_dict, month):
                     print(f"Couldn't format {name} Sheet")
                     print(e)
                 # return print("finished test run")
-                sleep(6)
+                sleep(WAITING_TIME_BASE + 1)
                 break  # Exit the retry loop if successful
             except Exception as e:
                 if "RATE_LIMIT_EXCEEDED" in str(e):
                     print(
-                        f"API rate limit exceeded. Waiting {waiting_time} and retrying {name} sheet"
+                        f"API rate limit exceeded. Waiting {WAITING_TIME_DOUBLE} and retrying {name} sheet"
                     )
                     sleep(
-                        waiting_time
+                        WAITING_TIME_DOUBLE
                     )  # Wait for 10 seconds before retrying, then wait 20, then 30, etc.
-                    waiting_time = waiting_time + 5
+                    WAITING_TIME_DOUBLE = WAITING_TIME_DOUBLE + 5
                 else:
                     print(f"Some other error ocurred while processing {name}")
                     names_not_updated.append(name)
@@ -505,38 +510,49 @@ def update_all_sheets(results_df, sh_hostess_dict, month):
             )
             return names_not_updated
     except Exception as e:
-        print(e,type(e))
+        print(e, type(e))
 
 
-def process_sheets_from_master(month,year_process,host_names='All'):
+def process_sheets_from_master(month, year_process, host_names="All"):
     MASTER_SPREADSHEET_ID = os.environ["MASTER_SPREADSHEET_ID"]
 
     hostess_dict = get_hostess_dict(MASTER_SPREADSHEET_ID)
-    if host_names != 'All':
-      try:
-        lis_names = host_names.replace("[","").replace("]","").replace("'","").replace(" ","").split(",")
-        hostess_dict = {name_sing:hostess_dict.get(name_sing,"") for name_sing in lis_names}
-      except:
-        print("Couldn't process individual names")
-
+    if host_names != "All":
+        try:
+            lis_names = (
+                host_names.replace("[", "")
+                .replace("]", "")
+                .replace("'", "")
+                .replace(" ", "")
+                .split(",")
+            )
+            hostess_dict = {
+                name_sing: hostess_dict.get(name_sing, "") for name_sing in lis_names
+            }
+        except:
+            print("Couldn't process individual names")
 
     results_df = get_dataframe(month=month, year=year_process)
     try:
-      names_in_df = results_df["hostess_name"].unique().tolist()
-      hostess_dict = {k:hostess_dict[k] for k in names_in_df if k in hostess_dict.keys()}
+        names_in_df = results_df["hostess_name"].unique().tolist()
+        hostess_dict = {
+            k: hostess_dict[k] for k in names_in_df if k in hostess_dict.keys()
+        }
     except Exception as e:
-      print(f"Error while getting current df names: {e}")
-      hostess_dict = get_hostess_dict(MASTER_SPREADSHEET_ID)
+        print(f"Error while getting current df names: {e}")
+        hostess_dict = get_hostess_dict(MASTER_SPREADSHEET_ID)
 
     if len(results_df) < 1:
         return print(f"No new data for the current month: {month} ")
     names_not_updated = update_all_sheets(results_df, hostess_dict, month)
-    if isinstance(names_not_updated,list):
-      print("Some updates failed, sending retry notice")
-      BUCKET_RETRY = os.environ["BUCKET_RETRY"]
-      today_date = datetime.date.today().strftime("%Y_%m_%d")
-      file_name = f'failed_process_{today_date}_{year_process}{month}.json'
-      write_failed_sheets_to_json(BUCKET_RETRY, file_name, names_not_updated, year_process, month)
+    if isinstance(names_not_updated, list):
+        print("Some updates failed, sending retry notice")
+        BUCKET_RETRY = os.environ["BUCKET_RETRY"]
+        today_date = datetime.date.today().strftime("%Y_%m_%d")
+        file_name = f"failed_process_{today_date}_{year_process}{month}.json"
+        write_failed_sheets_to_json(
+            BUCKET_RETRY, file_name, names_not_updated, year_process, month
+        )
     print(f"Finished processing all hostess for the month {month}")
 
     return
