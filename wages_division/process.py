@@ -3,18 +3,24 @@
 # gspread==5.7.2
 
 import os
-import pandas as pd
-import google.auth
-from google.cloud import bigquery
-import gspread
-from time import sleep
-from new_query import create_new_query
-from get_spread_info import get_hostess_dict
 import calendar
 import datetime
 import json
 import requests
+from time import sleep
+
+import pandas as pd
+import google.auth
+from google.cloud import bigquery
 from google.cloud import storage
+import gspread
+
+from new_query import create_new_query
+from get_spread_info import get_hostess_dict
+
+#### Constants
+WAITING_TIME_BASE = 5
+WAITING_TIME_DOUBLE = 10
 
 
 def write_failed_sheets_to_json(bucket_name, file_name, names, year, month):
@@ -138,7 +144,7 @@ def get_specific_hostess_df(df, hostess_name):
 
 
 def format_worksheet(worksheet):
-    format_waiting = 5
+    format_waiting = WAITING_TIME_BASE
 
     cell_types = {
         "number": {"numberFormat": {"type": "NUMBER", "pattern": "0"}},
@@ -263,7 +269,7 @@ def resize_columns(FILE, sheet_name):
                 print(
                     f"API rate limit exceeded. Waiting 5 and retrying formatting {sheet_name} sheet"
                 )
-                sleep(5)
+                sleep(WAITING_TIME_BASE)
             else:
                 print(e)
                 print(f"Couldnt resize the sheet {sheet_name}")
@@ -405,7 +411,7 @@ def update_all_sheets(results_df, sh_hostess_dict, month):
     list_hostess = list(sh_hostess_dict.keys())
     list_hostess = reverse_list_odd_date(list_hostess)
     print(f"Processing all {len(list_hostess)} hostess")
-    waiting_time = 10
+
     names_not_updated = []
     try:
         list_hostess.remove("店")
@@ -480,17 +486,17 @@ def update_all_sheets(results_df, sh_hostess_dict, month):
                     print(f"Couldn't format {name} Sheet")
                     print(e)
                 # return print("finished test run")
-                sleep(6)
+                sleep(WAITING_TIME_BASE + 1)
                 break  # Exit the retry loop if successful
             except Exception as e:
                 if "RATE_LIMIT_EXCEEDED" in str(e):
                     print(
-                        f"API rate limit exceeded. Waiting {waiting_time} and retrying {name} sheet"
+                        f"API rate limit exceeded. Waiting {WAITING_TIME_DOUBLE} and retrying {name} sheet"
                     )
                     sleep(
-                        waiting_time
+                        WAITING_TIME_DOUBLE
                     )  # Wait for 10 seconds before retrying, then wait 20, then 30, etc.
-                    waiting_time = waiting_time + 5
+                    WAITING_TIME_DOUBLE = WAITING_TIME_DOUBLE + 5
                 else:
                     print(f"Some other error ocurred while processing {name}")
                     names_not_updated.append(name)

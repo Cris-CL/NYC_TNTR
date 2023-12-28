@@ -44,13 +44,13 @@ WITH
           END
             AS work_time_calculated,
             CASE
-              WHEN PARSE_TIMESTAMP('%H%M', start_time) BETWEEN PARSE_TIMESTAMP('%H%M', "0000") AND PARSE_TIMESTAMP('%H%M', "0800") THEN DATETIME_ADD(PARSE_DATETIME("%Y%m%d %H%M",CONCAT(CAST(DAY AS INT64)," ",start_time)), INTERVAL 1 DAY)
+              WHEN PARSE_TIMESTAMP('%H%M', start_time) BETWEEN PARSE_TIMESTAMP('%H%M', "0000") AND PARSE_TIMESTAMP('%H%M', "1000") THEN DATETIME_ADD(PARSE_DATETIME("%Y%m%d %H%M",CONCAT(CAST(DAY AS INT64)," ",start_time)), INTERVAL 1 DAY)
             ELSE
             PARSE_DATETIME("%Y%m%d %H%M",CONCAT(CAST(DAY AS INT64)," ",start_time))
           END
             AS start_datetime,
             CASE
-              WHEN PARSE_TIMESTAMP('%H%M', leave_time) BETWEEN PARSE_TIMESTAMP('%H%M', "0000") AND PARSE_TIMESTAMP('%H%M', "0800") THEN DATETIME_ADD(PARSE_DATETIME("%Y%m%d %H%M",CONCAT(CAST(DAY AS INT64)," ",leave_time)), INTERVAL 1 DAY)
+              WHEN PARSE_TIMESTAMP('%H%M', leave_time) BETWEEN PARSE_TIMESTAMP('%H%M', "0000") AND PARSE_TIMESTAMP('%H%M', "1000") THEN DATETIME_ADD(PARSE_DATETIME("%Y%m%d %H%M",CONCAT(CAST(DAY AS INT64)," ",leave_time)), INTERVAL 1 DAY)
             ELSE
             PARSE_DATETIME("%Y%m%d %H%M",CONCAT(CAST(DAY AS INT64)," ",leave_time))
           END
