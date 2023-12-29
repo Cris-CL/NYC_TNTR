@@ -115,7 +115,7 @@ def fix_time_assis(df):
     if not adds a 0 at the beginning until it is 4 in case is empty doesn't do anything"""
     columns_time = ["start_time","leave_time"]
     def fix_time(x):
-        if type(x) != type(""):
+        if not isinstance(x, str):
             return x
         elif len(x) == 0:
             return x
@@ -143,7 +143,8 @@ def add_date_to_df(df):
 
 def is_valid_filename(filename):
 
-    pattern = r'^NYC_\d{8}_(ASS|GSH|GDT)\.xlsx$'
+    # pattern = r'^NYC_\d{8}_(ASS|GSH|GDT)\.xlsx$' ### Previous pattern
+    pattern = r'^NYC_(\d{4}(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01]))_(ASS|GSH|GDT)\.xlsx$'
     if re.match(pattern, filename):
         return True
     else:
