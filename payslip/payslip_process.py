@@ -5,28 +5,32 @@ import google.auth
 import calendar
 from time import sleep
 from google.cloud import bigquery
+
 # from new_query import create_new_query
 
 
-def create_new_query(month,year):
-    month_str = (2-len(str(month)))*"0" + str(month) ## Add a zero if the month is less than 10
+def create_new_query(month, year):
+    month_str = (2 - len(str(month))) * "0" + str(
+        month
+    )  ## Add a zero if the month is less than 10
     query = f"SELECT * from tantra.HostessWagesForPaySlip('{year}','{month_str}')"
     return query
 
-def get_df_full(month, year,cred):
+
+def get_df_full(month, year, cred):
     PROJECT_ID = os.environ["PROJECT_ID"]
     print(PROJECT_ID)
     query = create_new_query(month, year)
-    df_query = pd.read_gbq(query,project_id=PROJECT_ID,credentials=cred)
+    df_query = pd.read_gbq(query, project_id=PROJECT_ID, credentials=cred)
     return df_query.copy()
 
 
-def get_bill_file(credentials=None):
-    BILL_SPREAD_ID = os.environ["OID"]
-    print(BILL_SPREAD_ID)
+def get_bill_file(bill_file_id, credentials=None):
+    # bill_file_id = os.environ["OID"]
+    print(bill_file_id)
     # credentials, _ = google.auth.default()
     gc = gspread.authorize(credentials)
-    bill_file = gc.open_by_key(BILL_SPREAD_ID)
+    bill_file = gc.open_by_key(bill_file_id)
     return bill_file
 
 
@@ -150,7 +154,7 @@ def add_new_rows_to_worksheet(
     return worksheet
 
 
-def process_discounts(FILE, name, discount_rows):
+def process_discounts(FILE, name, discount_rows, cp_code):
     disc_subtotal = 0
 
     for dis_row in discount_rows:
@@ -169,9 +173,13 @@ def process_discounts(FILE, name, discount_rows):
     disc_wsh = copy_template(FILE, new_sheet_name, "Example_2")
     current_rows = disc_wsh.get_all_values()
 
-    current_rows[2][1] = abs(disc_subtotal)
-    current_rows[3][1] = disc_ten_percent
-    new_added = current_rows[:6] + discount_rows + current_rows[8:]
+    current_rows[4][1] = cp_code
+    current_rows[2][0] = '=VLOOKUP(B5,MASTER_MHS!$A:$C,3,false)&" 様"'
+    current_rows[3][1] = "=VLOOKUP(B5,MASTER_MHS!$A:$B,2,false)"
+
+    current_rows[6][1] = abs(disc_subtotal)
+    current_rows[7][1] = disc_ten_percent
+    new_added = current_rows[:10] + discount_rows + current_rows[12:]
 
     # Insert the new rows after the 15th row
     disc_wsh.update(new_added, value_input_option="USER_ENTERED")
@@ -183,7 +191,7 @@ def get_wage_comission(dataframe):
     rows = []
 
     for _, row in dataframe.iterrows():
-        print(row)
+
         date = row["DATE"]
         wage_total_daily = turn_number(row["wage_total_daily"])
         total_day = turn_number(row["TOTAL_DAY"])
@@ -259,10 +267,10 @@ def get_discounts(dataframe):
     return rows
 
 
-def get_all_bills(bill_master_df,cred,month_string):
+def get_all_bills(bill_master_df, cred, month_string, bill_id):
     total_errors = 0
     waiting_time = 20
-    BILL_FILE = get_bill_file(cred)
+    BILL_FILE = get_bill_file(bill_id, cred)
 
     for name in bill_master_df["hostess_name"].unique():
         if name == "店":
@@ -280,10 +288,10 @@ def get_all_bills(bill_master_df,cred,month_string):
                     wage_comission_rows=nw_rows,
                     discount_rows=discount_rows,
                     cp_code=cpp_code,
-                    month_str=month_string
+                    month_str=month_string,
                 )
                 sleep(3)
-                process_discounts(BILL_FILE, name, discount_rows)
+                process_discounts(BILL_FILE, name, discount_rows, cpp_code)
                 sleep(5)
                 break
             except Exception as e:
