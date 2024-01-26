@@ -7,20 +7,24 @@ from time import sleep
 from google.cloud import bigquery
 # from new_query import create_new_query
 
-def create_new_query(month, year):
 
-    pass
+def create_new_query(month,year):
+    month_str = (2-len(str(month)))*"0" + str(month) ## Add a zero if the month is less than 10
+    query = f"SELECT * from tantra.HostessWagesForPaySlip('{year}','{month_str}')"
+    return query
 
-def get_df_full(month, year):
+def get_df_full(month, year,cred):
     PROJECT_ID = os.environ["PROJECT_ID"]
+    print(PROJECT_ID)
     query = create_new_query(month, year)
-    df_query = pd.read_gbq(query,project_id=PROJECT_ID)
+    df_query = pd.read_gbq(query,project_id=PROJECT_ID,credentials=cred)
     return df_query.copy()
 
 
-def get_bill_file():
-    BILL_SPREAD_ID = os.environ["BILL_SPREAD_ID"]
-    credentials, _ = google.auth.default()
+def get_bill_file(credentials=None):
+    BILL_SPREAD_ID = os.environ["OID"]
+    print(BILL_SPREAD_ID)
+    # credentials, _ = google.auth.default()
     gc = gspread.authorize(credentials)
     bill_file = gc.open_by_key(BILL_SPREAD_ID)
     return bill_file
@@ -76,6 +80,7 @@ def turn_number(number):
     try:
         return float(number)
     except:
+        # print(f"Error converting {number} to float.")
         return 0.0
 
 
@@ -178,6 +183,7 @@ def get_wage_comission(dataframe):
     rows = []
 
     for _, row in dataframe.iterrows():
+        print(row)
         date = row["DATE"]
         wage_total_daily = turn_number(row["wage_total_daily"])
         total_day = turn_number(row["TOTAL_DAY"])
@@ -190,7 +196,8 @@ def get_wage_comission(dataframe):
         if (isinstance(X, float) or isinstance(X, int)) and X > 0:
             extra_comission = extra_comission + X
 
-        total_day = total_day + extra_comission
+        total_day = round(total_day)
+        # total_day = total_day + extra_comission
         if wage_total_daily > 0:
             rows.append(
                 [
@@ -252,10 +259,10 @@ def get_discounts(dataframe):
     return rows
 
 
-def get_all_bills(bill_master_df):
+def get_all_bills(bill_master_df,cred,month_string):
     total_errors = 0
     waiting_time = 20
-    BILL_FILE = get_bill_file()
+    BILL_FILE = get_bill_file(cred)
 
     for name in bill_master_df["hostess_name"].unique():
         if name == "店":
@@ -273,6 +280,7 @@ def get_all_bills(bill_master_df):
                     wage_comission_rows=nw_rows,
                     discount_rows=discount_rows,
                     cp_code=cpp_code,
+                    month_str=month_string
                 )
                 sleep(3)
                 process_discounts(BILL_FILE, name, discount_rows)
