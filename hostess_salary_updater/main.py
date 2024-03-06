@@ -2,6 +2,7 @@ import base64
 import functions_framework
 import os
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import requests
 import pytz
 
@@ -19,16 +20,16 @@ def send_request(month_select,test_var=True):
     if month_select ==1:
         month = dt.month
     elif month_select ==2:
-        month = dt.month - 1
+        dt = dt - relativedelta(months=1)
+        month = dt.month
     else:
         print(f"Wrong message {month_select}")
         return
-
-    if month ==0:
-        month = 1
+    year = dt.year
     data_send = {
         "name": name_var,
-        "month": month
+        "month": month,
+        "year":year
         }
     headers = {'Content-Type': 'application/json'}
     print(data_send)
