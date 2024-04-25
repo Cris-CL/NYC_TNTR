@@ -190,12 +190,16 @@ def clean_assis(df):
         'start_time': 'str',
         'leave_time': 'str'
     }
+    try:
+        df["working_hours"] = df["working_hours"].apply(lambda x: x.replace(",",".") if isinstance(x,str) else x)
+    except:
+        print("Problem with clean_assis trying to convert string to number")
     df = df.astype({
         col:str_col.get(col,"float64") for col in df.columns
         })
     for col in str_col.keys():
         df[col] = df[col].apply(lambda x: None if x in [
-            "nan","none","NAN","NaN",""," "
+            "nan","none","NAN","NaN",""," ", "None", "NONE"
             ] else x)
     return df.copy()
 
