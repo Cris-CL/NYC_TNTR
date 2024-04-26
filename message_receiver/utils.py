@@ -199,7 +199,7 @@ def clean_assis(df):
         })
     for col in str_col.keys():
         df[col] = df[col].apply(lambda x: None if x in [
-            "nan","none","NAN","NaN",""," ", "None", "NONE"
+            "nan","none","NAN","NaN",""," "
             ] else x)
     return df.copy()
 
@@ -237,6 +237,14 @@ def clean_shosai(df):
     for col in gs_str_col.keys():
         df[col] = df[col].apply(lambda x: None if isinstance(x,str) and x in[
             "nan","none","NAN","NaN",""," "] else x)
+    cp_columns = [
+        'cp_code_bottle',
+        'cp_bottle',
+        'cp_in_charge',
+        ]
+    for cp_col in cp_columns:
+    #### DELETE whitespace from the lists
+        df[cp_col] = df[cp_col].apply(lambda x: x.replace(" ","") if isinstance(x,str) else x)
     return df.copy()
 
 
