@@ -85,7 +85,7 @@ def correct_date_nippo(df,month):
 def get_name_from_order(df):
     def extract_info(text):
         match = re.search(r'\((.*?)\)', text)
-        return match.group(1) if match else ''
+        return match.group(1).replace(' ','') if match else ''
 
     df['cp_in_charge'] = df.apply(lambda row: extract_info(row['product_name']) if pd.isna(row['cp_in_charge']) or row['cp_in_charge'] == '' else row['cp_in_charge'], axis=1)
     df['cp_bottle'] = df.apply(lambda row: extract_info(row['product_name']) if pd.isna(row['cp_bottle']) or row['cp_bottle'] == '' else row['cp_bottle'], axis=1)
