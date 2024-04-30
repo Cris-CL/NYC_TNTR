@@ -85,7 +85,7 @@ def correct_date_nippo(df,month):
 def get_name_from_order(df):
     def extract_info(text):
         match = re.search(r'\((.*?)\)', text)
-        return match.group(1) if match else ''
+        return match.group(1).replace(' ','') if match else ''
 
     df['cp_in_charge'] = df.apply(lambda row: extract_info(row['product_name']) if pd.isna(row['cp_in_charge']) or row['cp_in_charge'] == '' else row['cp_in_charge'], axis=1)
     df['cp_bottle'] = df.apply(lambda row: extract_info(row['product_name']) if pd.isna(row['cp_bottle']) or row['cp_bottle'] == '' else row['cp_bottle'], axis=1)
@@ -190,6 +190,10 @@ def clean_assis(df):
         'start_time': 'str',
         'leave_time': 'str'
     }
+    try:
+        df["working_hours"] = df["working_hours"].apply(lambda x: x.replace(",",".") if isinstance(x,str) else x)
+    except:
+        print("Problem with clean_assis trying to convert string to number")
     df = df.astype({
         col:str_col.get(col,"float64") for col in df.columns
         })
@@ -233,6 +237,14 @@ def clean_shosai(df):
     for col in gs_str_col.keys():
         df[col] = df[col].apply(lambda x: None if isinstance(x,str) and x in[
             "nan","none","NAN","NaN",""," "] else x)
+    cp_columns = [
+        'cp_code_bottle',
+        'cp_bottle',
+        'cp_in_charge',
+        ]
+    for cp_col in cp_columns:
+    #### DELETE whitespace from the lists
+        df[cp_col] = df[cp_col].apply(lambda x: x.replace(" ","") if isinstance(x,str) else x)
     return df.copy()
 
 
