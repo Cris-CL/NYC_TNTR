@@ -9,6 +9,9 @@ import pytz
 URL = os.environ.get("URL")
 
 def create_message(month_select,test_var=True):
+    """
+    TODO docstrings
+    """
     timezone_name = 'Asia/Tokyo'
 
     if test_var == True:
@@ -42,6 +45,9 @@ def create_message(month_select,test_var=True):
 
 
 def send_request(message):
+    """
+    TODO docstrings
+    """
     headers = {'Content-Type': 'application/json'}
     print(message)
     try:
