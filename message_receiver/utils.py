@@ -85,7 +85,7 @@ def correct_date_nippo(df,month):
 def get_name_from_order(df):
     def extract_info(text):
         match = re.search(r'\((.*?)\)', text)
-        return match.group(1).replace(' ','') if match else ''
+        return match.group(1).replace(' ,',',').replace(', ',',') if match else ''
 
     df['cp_in_charge'] = df.apply(lambda row: extract_info(row['product_name']) if pd.isna(row['cp_in_charge']) or row['cp_in_charge'] == '' else row['cp_in_charge'], axis=1)
     df['cp_bottle'] = df.apply(lambda row: extract_info(row['product_name']) if pd.isna(row['cp_bottle']) or row['cp_bottle'] == '' else row['cp_bottle'], axis=1)
@@ -244,7 +244,7 @@ def clean_shosai(df):
         ]
     for cp_col in cp_columns:
     #### DELETE whitespace from the lists
-        df[cp_col] = df[cp_col].apply(lambda x: x.replace(" ","") if isinstance(x,str) else x)
+        df[cp_col] = df[cp_col].apply(lambda x: x.replace(", ",",").replace(' ,',',') if isinstance(x,str) else x)
     return df.copy()
 
 

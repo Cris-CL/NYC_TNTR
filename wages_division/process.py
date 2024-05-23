@@ -3,24 +3,20 @@
 # gspread==5.7.2
 
 import os
+import pandas as pd
+import google.auth
+from google.cloud import bigquery
+import gspread
+from time import sleep
+from query import create_query
+from new_query import create_new_query
+from get_spread_info import get_hostess_dict
+import locale
 import calendar
 import datetime
 import json
 import requests
-from time import sleep
-
-import pandas as pd
-import google.auth
-from google.cloud import bigquery
 from google.cloud import storage
-import gspread
-
-from new_query import create_new_query
-from get_spread_info import get_hostess_dict
-
-#### Constants
-WAITING_TIME_BASE = 5
-WAITING_TIME_DOUBLE = 10
 
 
 def write_failed_sheets_to_json(bucket_name, file_name, names, year, month):
@@ -29,18 +25,17 @@ def write_failed_sheets_to_json(bucket_name, file_name, names, year, month):
         "attempt": 1,
         "year": year,
         "month": month,
-        "names": names,
+        "names": names
     }
-    headers = {"Content-Type": "application/json"}
+    headers = {'Content-Type': 'application/json'}
     TEST_FUNCTION = os.environ["TEST_FUNCTION"]
     try:
-        print("Sending request to test function url")
-        requests.post(TEST_FUNCTION, json=failed_sheets, headers=headers)
+      print("Sending request to test function url")
+      requests.post(TEST_FUNCTION, json=failed_sheets, headers=headers)
     except Exception as e:
-        print(e)
+      print(e)
     save_json_to_bucket(bucket_name, file_name, failed_sheets)
     return
-
 
 def save_json_to_bucket(bucket_name, file_name, data):
     client = storage.Client()
@@ -75,12 +70,18 @@ def get_spreadsheet(spreadsheet_name=None, spreadsheet_id=None):
 
 
 def get_dataframe(month=9, year=2023):
-    QUERY_ASSIS = create_new_query(month, year=2023)
+    QUERY_ASSIS = create_new_query(month, year)
     # Initialize Google Sheets and BigQuery clients
 
     # BigQuery query
     query = QUERY_ASSIS
-    bq_client = bigquery.Client()
+    credentials, _ = google.auth.default(scopes=['https://www.googleapis.com/auth/cloud-platform',
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/bigquery"
+        ])
+    # Create a BigQuery client with the obtained credentials
+    bq_client = bigquery.Client(credentials=credentials)
+
     query_job = bq_client.query(query)
     results_df = query_job.to_dataframe()
 
@@ -144,7 +145,7 @@ def get_specific_hostess_df(df, hostess_name):
 
 
 def format_worksheet(worksheet):
-    format_waiting = WAITING_TIME_BASE
+    format_waiting = 5
 
     cell_types = {
         "number": {"numberFormat": {"type": "NUMBER", "pattern": "0"}},
@@ -269,7 +270,7 @@ def resize_columns(FILE, sheet_name):
                 print(
                     f"API rate limit exceeded. Waiting 5 and retrying formatting {sheet_name} sheet"
                 )
-                sleep(WAITING_TIME_BASE)
+                sleep(5)
             else:
                 print(e)
                 print(f"Couldnt resize the sheet {sheet_name}")
@@ -342,7 +343,7 @@ def calc_totals_nrws(worksheet, year, month):
                         # Convert yen currency-formatted values to float
                         try:
                             currency_value = float(
-                                cell_value.strip("¥").replace(",", "")
+                                cell_value.strip("¥").replace(",", "").replace("¥",'')
                             )
                             column_values.append(currency_value)
                         except ValueError:
@@ -407,11 +408,11 @@ def calc_totals_nrws(worksheet, year, month):
         return False
 
 
-def update_all_sheets(results_df, sh_hostess_dict, month):
+def update_all_sheets(results_df, sh_hostess_dict, year, month):
     list_hostess = list(sh_hostess_dict.keys())
     list_hostess = reverse_list_odd_date(list_hostess)
     print(f"Processing all {len(list_hostess)} hostess")
-
+    waiting_time = 10
     names_not_updated = []
     try:
         list_hostess.remove("店")
@@ -438,7 +439,7 @@ def update_all_sheets(results_df, sh_hostess_dict, month):
 
                 sheets = [sht_name.title for sht_name in sh.worksheets()]
 
-                year = 2023  ## TODO change this to a environment variable or another way to get the year
+                # year = 2023  ## TODO change this to a environment variable or another way to get the year
                 month_str = (2 - len(str(month))) * "0" + str(
                     month
                 )  ## Add a zero if the month is less than 10
@@ -486,17 +487,17 @@ def update_all_sheets(results_df, sh_hostess_dict, month):
                     print(f"Couldn't format {name} Sheet")
                     print(e)
                 # return print("finished test run")
-                sleep(WAITING_TIME_BASE + 1)
+                sleep(6)
                 break  # Exit the retry loop if successful
             except Exception as e:
                 if "RATE_LIMIT_EXCEEDED" in str(e):
                     print(
-                        f"API rate limit exceeded. Waiting {WAITING_TIME_DOUBLE} and retrying {name} sheet"
+                        f"API rate limit exceeded. Waiting {waiting_time} and retrying {name} sheet"
                     )
                     sleep(
-                        WAITING_TIME_DOUBLE
+                        waiting_time
                     )  # Wait for 10 seconds before retrying, then wait 20, then 30, etc.
-                    WAITING_TIME_DOUBLE = WAITING_TIME_DOUBLE + 5
+                    waiting_time = waiting_time + 5
                 else:
                     print(f"Some other error ocurred while processing {name}")
                     names_not_updated.append(name)
@@ -510,49 +511,46 @@ def update_all_sheets(results_df, sh_hostess_dict, month):
             )
             return names_not_updated
     except Exception as e:
-        print(e, type(e))
+        print(e,type(e))
 
 
-def process_sheets_from_master(month, year_process, host_names="All"):
-    MASTER_SPREADSHEET_ID = os.environ["MASTER_SPREADSHEET_ID"]
+def process_sheets_from_master(month,year_process,host_names='All'):
+    print(f"Start processing for the year: {year_process} and the month: {month}")
+    spread_2023 = os.environ["MASTER_SPREADSHEET_ID"]
+    spread_2024 = os.environ["MASTER_SPREADSHEET_ID_24"]
 
-    hostess_dict = get_hostess_dict(MASTER_SPREADSHEET_ID)
-    if host_names != "All":
-        try:
-            lis_names = (
-                host_names.replace("[", "")
-                .replace("]", "")
-                .replace("'", "")
-                .replace(" ", "")
-                .split(",")
-            )
-            hostess_dict = {
-                name_sing: hostess_dict.get(name_sing, "") for name_sing in lis_names
-            }
-        except:
-            print("Couldn't process individual names")
+    master_selector = {
+      "2023":spread_2023,
+      "2024":spread_2024,
+      }
+    master_id = master_selector[str(year_process)]
+
+    hostess_dict = get_hostess_dict(master_id)
+    if host_names != 'All':
+      try:
+        lis_names = host_names.replace("[","").replace("]","").replace("'","").replace(" ","").split(",")
+        hostess_dict = {name_sing:hostess_dict.get(name_sing,"") for name_sing in lis_names}
+      except:
+        print("Couldn't process individual names")
+
 
     results_df = get_dataframe(month=month, year=year_process)
     try:
-        names_in_df = results_df["hostess_name"].unique().tolist()
-        hostess_dict = {
-            k: hostess_dict[k] for k in names_in_df if k in hostess_dict.keys()
-        }
+      names_in_df = results_df["hostess_name"].unique().tolist()
+      hostess_dict = {k:hostess_dict[k] for k in names_in_df if k in hostess_dict.keys()}
     except Exception as e:
-        print(f"Error while getting current df names: {e}")
-        hostess_dict = get_hostess_dict(MASTER_SPREADSHEET_ID)
+      print(f"Error while getting current df names: {e}")
+      hostess_dict = get_hostess_dict(MASTER_SPREADSHEET_ID)
 
     if len(results_df) < 1:
         return print(f"No new data for the current month: {month} ")
-    names_not_updated = update_all_sheets(results_df, hostess_dict, month)
-    if isinstance(names_not_updated, list):
-        print("Some updates failed, sending retry notice")
-        BUCKET_RETRY = os.environ["BUCKET_RETRY"]
-        today_date = datetime.date.today().strftime("%Y_%m_%d")
-        file_name = f"failed_process_{today_date}_{year_process}{month}.json"
-        write_failed_sheets_to_json(
-            BUCKET_RETRY, file_name, names_not_updated, year_process, month
-        )
+    names_not_updated = update_all_sheets(results_df, hostess_dict, year_process, month)
+    if isinstance(names_not_updated,list):
+      print("Some updates failed, sending retry notice")
+      BUCKET_RETRY = os.environ["BUCKET_RETRY"]
+      today_date = datetime.date.today().strftime("%Y_%m_%d")
+      file_name = f'failed_process_{today_date}_{year_process}{month}.json'
+      write_failed_sheets_to_json(BUCKET_RETRY, file_name, names_not_updated, year_process, month)
     print(f"Finished processing all hostess for the month {month}")
 
     return

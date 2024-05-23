@@ -22,12 +22,11 @@ def process_sheet(request):
         print('Test')
         return '<h1>Test run correctly</h1>'
       month = posted_data["month"]
+      year = posted_data["year"]
       print(month)
 
-      # main_process(hostess_name,month)
-
       if hostess_name == 'All':
-        process_sheets_from_master(month,hostess_name)
+        process_sheets_from_master(month,year,hostess_name)
       elif "[" in hostess_name:
         print("placeholder")
     except Exception as e:
