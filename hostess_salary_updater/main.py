@@ -8,10 +8,25 @@ import pytz
 
 URL = os.environ.get("URL")
 
-
 def create_message(month_select, test_var=True):
     """
-    TODO docstrings
+    This function takes 2 parameters: month_select a number between 1 and 12
+    and test_var a boolean, it creates the json message that will be send to
+    update the Worksheets of every hostess, if the test_var parameter is the
+    default (True), then the message will be a test one and it will not trigger
+    the later function in the URL.
+
+    Parameters:
+
+    - month_select (int): Integer indicating which month of the current year will
+    be processed.
+
+    - test_var (bool): Boolean to indicate if the run will be a test or not.
+
+    Returns:
+
+     - data_send (dict): Dictionary encapsullating all the necessary data for
+     the funcion in the URL to work.
     """
     timezone_name = "Asia/Tokyo"
 
@@ -39,10 +54,15 @@ def create_message(month_select, test_var=True):
     data_send = {"type": type_request, "names": name_var, "month": month, "year": year}
     return data_send
 
-
 def send_request(message):
     """
-    TODO docstrings
+    This function sends a POST request to the URL with the message dict given as
+    a parameter.
+
+    Parameters:
+
+    - message (dict): The message parameter containing all the information for the function
+    in the URL, this message is obtained by the create_message funtion.
     """
     headers = {"Content-Type": "application/json"}
     print(message)
@@ -53,13 +73,19 @@ def send_request(message):
         print(f"POST request Send to {URL}")
     return
 
-
 @functions_framework.cloud_event
 def send_hss_update(cloud_event):
     """
-    This function sends a POST request to the URL with the month and year as the payload.
-    the trigger for this function is a cloud scheduler job that runs every day, 2 times,
-    one for the previous month and one for the current month.
+    This function is triggered by a cloud scheduler job that runs every day,
+    2 times, one for the previous month and one for the current month. in the
+    cloud event that is a PUB/SUB message, that contains the month_select
+    information used to determine if the month to process is the current or the
+    previous one, once determined that, the message to send is build with the
+    function create_message, and then send with the function send_request.
+
+    Parameters:
+
+    - cloud_event: event generated when a PUB/SUB message is published
     """
     month_sel = cloud_event.data["message"]["attributes"]["month_select"]
     if "previous" in month_sel:
