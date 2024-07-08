@@ -248,7 +248,7 @@ def clean_shosai(df):
         ]
     for cp_col in cp_columns:
     #### DELETE whitespace from the lists
-        df[cp_col] = df[cp_col].apply(lambda x: x.replace(", ",",").replace(' ,',',') if isinstance(x,str) else x)
+        df[cp_col] = df[cp_col].apply(lambda x: x.replace(", ",",").replace(' ,',',').replace('.0','') if isinstance(x,str) else x)
     df = df[df['business_day'].notna()]
     return df.copy()
 
