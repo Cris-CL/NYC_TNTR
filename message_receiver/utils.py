@@ -9,7 +9,6 @@ from goukei_data import gd_jp_en
 from goukei_shosai import gs_jp_en
 from nippo import nippo_jp_en
 
-
 def clean_dict(dict_in):
     dict_out = {}
     for key in dict_in.keys():
@@ -22,12 +21,10 @@ gd_jp_en = clean_dict(gd_jp_en)
 gs_jp_en = clean_dict(gs_jp_en)
 nippo_jp_en = clean_dict(nippo_jp_en)
 
-
 def get_timestamp(timezone_name):
   dt = datetime.now(pytz.timezone(timezone_name))
   timestamp = dt.strftime(("%Y-%m-%d %H:%M:%S"))
   return timestamp
-
 
 def get_date_from_file(file_name):
     ## new way
@@ -61,7 +58,6 @@ def get_date_from_file(file_name):
             date_2 = None
         return date_2
 
-
 def get_month_nippo(file_name):
     month = file_name.split("-")[0].split(" ")[-1]
     if len(month) == 1:
@@ -72,7 +68,6 @@ def get_month_nippo(file_name):
         print("error with the format")
     return month
 
-
 def correct_date_nippo(df,month):
     timezone_name = "Asia/Tokyo"
     stamp_now = datetime.now(tz=pytz.timezone(timezone_name))
@@ -82,15 +77,18 @@ def correct_date_nippo(df,month):
         )
     return df.copy()
 
-def get_name_from_order(df):
-    def extract_info(text):
+def extract_info(text):
+    if isinstance(text,str):
         match = re.search(r'\((.*?)\)', text)
         return match.group(1).replace(' ,',',').replace(', ',',') if match else ''
+    else:
+        print(text,type(text))
+        return ''
 
+def get_name_from_order(df):
     df['cp_in_charge'] = df.apply(lambda row: extract_info(row['product_name']) if pd.isna(row['cp_in_charge']) or row['cp_in_charge'] == '' else row['cp_in_charge'], axis=1)
     df['cp_bottle'] = df.apply(lambda row: extract_info(row['product_name']) if pd.isna(row['cp_bottle']) or row['cp_bottle'] == '' else row['cp_bottle'], axis=1)
     return df.copy()
-
 
 def get_shared_bottle(df):
     """"
@@ -107,7 +105,6 @@ def get_shared_bottle(df):
                                               lambda x: len(x) if isinstance(x,list) else 1)
 
     return df.copy()
-
 
 def fix_time_assis(df):
 
@@ -128,12 +125,10 @@ def fix_time_assis(df):
         df[col] = df[col].map(fix_time)
     return df.copy()
 
-
 def add_file_name_to_df(df,file_name):
     df["FILE_NAME"] = file_name
     df["FILE_NAME"] = df["FILE_NAME"].astype("str")
     return df.copy()
-
 
 def add_date_to_df(df):
     date = get_timestamp("Asia/Tokyo")
@@ -149,7 +144,6 @@ def is_valid_filename(filename):
         return True
     else:
         return False
-
 
 def identify_file(file_name):
     lower_file_name = file_name.lower()
@@ -172,7 +166,6 @@ def identify_file(file_name):
             return "goukei_data"
     else:
         return "unknown"
-
 
 def clean_assis(df):
     str_col = {
@@ -203,7 +196,6 @@ def clean_assis(df):
             ] else x)
     return df.copy()
 
-
 def clean_nippo(df):
     ni_str_col = {
     'weekday':'string',
@@ -219,7 +211,6 @@ def clean_nippo(df):
             "nan","none","NAN","NaN",""," "
             ] else x)
     return df.copy()
-
 
 def clean_shosai(df):
     gs_str_col = {
@@ -247,7 +238,6 @@ def clean_shosai(df):
         df[cp_col] = df[cp_col].apply(lambda x: x.replace(", ",",").replace(' ,',',') if isinstance(x,str) else x)
     return df.copy()
 
-
 def clean_goukei_data(df):
     gd_str_col = {
         'order_number':'str',
@@ -271,7 +261,6 @@ def clean_goukei_data(df):
             "nan","none","NAN","NaN",""," "
             ] else x)
     return df.copy()
-
 
 def load_file(uri,file_name):
     file_type = identify_file(file_name)
@@ -334,7 +323,6 @@ def load_file(uri,file_name):
         print(e)
         return print(f"Error loading file {file_name}")
 
-
 def get_list_reports(dataset,table,row):
     """
     Given a table name, returns a list with the file names that were already uploaded to bq
@@ -354,7 +342,6 @@ def get_list_reports(dataset,table,row):
             list_reports_uploaded = []
     return list_reports_uploaded
 
-
 def check_exist_db(file_name,dataset,table,row):
     """
     Function
@@ -370,7 +357,6 @@ def check_exist_db(file_name,dataset,table,row):
         return True
     else:
         return False
-
 
 def file_exist_already(file_name,dataset,table,row):
     """If the file exist then the file is deleted from the db"""
@@ -403,7 +389,6 @@ def upload_bq(df,table_id,project_id):
         print(e)
     return
 
-
 def move_file(origin_bucket, file_name, destination_bucket_name, file_name_destination):
     """Moves a blob from one bucket to another with a new name."""
     move_client = storage.Client()
@@ -420,7 +405,6 @@ def move_file(origin_bucket, file_name, destination_bucket_name, file_name_desti
     except Exception as e:
         print(f"Error in move_file {file_name} -- type: {type(e)} -- {e}")
     return
-
 
 def save_processed_file(df,file_name):
     """
