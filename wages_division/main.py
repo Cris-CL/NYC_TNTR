@@ -15,20 +15,23 @@ def process_sheet(request):
       print("We have received a request")
       print(posted_data)
 
-      hostess_name = posted_data["name"]
-
+      hostess_name = posted_data["names"]
+      type_request = posted_data["type"]
+      attempt_number = posted_data["attempt"]
       print(hostess_name)
-      if hostess_name == 'Test':
+      if type_request == 'test':
         print('Test')
         return '<h1>Test run correctly</h1>'
       month = posted_data["month"]
       year = posted_data["year"]
       print(month)
 
-      if hostess_name == 'All':
+      if type_request == 'regular':
         process_sheets_from_master(month,year,hostess_name)
-      elif "[" in hostess_name:
-        print("placeholder")
+
+      elif type_request == 'retry':
+        print(f"trying retry for: {hostess_name}")
+        process_sheets_from_master(month,year,hostess_name,attempts=attempt_number)
     except Exception as e:
       print(e)
       http_status='',400
