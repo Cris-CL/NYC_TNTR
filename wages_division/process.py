@@ -8,7 +8,6 @@ import google.auth
 from google.cloud import bigquery
 import gspread
 from time import sleep
-from query import create_query
 from new_query import create_new_query
 from get_spread_info import get_hostess_dict
 import locale
@@ -19,10 +18,11 @@ import requests
 from google.cloud import storage
 
 
-def write_failed_sheets_to_json(bucket_name, file_name, names, year, month):
+def write_failed_sheets_to_json(bucket_name, file_name, names, year, month,attempt=0):
+    current_attempt = attempt + 1
     failed_sheets = {
         "type": "retry",
-        "attempt": 1,
+        "attempt": current_attempt,
         "year": year,
         "month": month,
         "names": names
@@ -509,12 +509,12 @@ def update_all_sheets(results_df, sh_hostess_dict, year, month):
             print(
                 f'Couldnt update the following people: {" ,".join(names_not_updated)}'
             )
-            return names_not_updated
     except Exception as e:
         print(e,type(e))
+    return names_not_updated
 
 
-def process_sheets_from_master(month,year_process,host_names='All'):
+def process_sheets_from_master(month,year_process,host_names='All',attempts=1):
     print(f"Start processing for the year: {year_process} and the month: {month}")
     spread_2023 = os.environ["MASTER_SPREADSHEET_ID"]
     spread_2024 = os.environ["MASTER_SPREADSHEET_ID_24"]
@@ -526,9 +526,10 @@ def process_sheets_from_master(month,year_process,host_names='All'):
     master_id = master_selector[str(year_process)]
 
     hostess_dict = get_hostess_dict(master_id)
-    if host_names != 'All':
+    if isinstance(host_names,list):
       try:
-        lis_names = host_names.replace("[","").replace("]","").replace("'","").replace(" ","").split(",")
+        # lis_names = host_names.replace("[","").replace("]","").replace("'","").replace(" ","").split(",")
+        lis_names = host_names
         hostess_dict = {name_sing:hostess_dict.get(name_sing,"") for name_sing in lis_names}
       except:
         print("Couldn't process individual names")
@@ -545,12 +546,17 @@ def process_sheets_from_master(month,year_process,host_names='All'):
     if len(results_df) < 1:
         return print(f"No new data for the current month: {month} ")
     names_not_updated = update_all_sheets(results_df, hostess_dict, year_process, month)
-    if isinstance(names_not_updated,list):
+    if isinstance(names_not_updated,list) and len(names_not_updated) > 0:
       print("Some updates failed, sending retry notice")
       BUCKET_RETRY = os.environ["BUCKET_RETRY"]
       today_date = datetime.date.today().strftime("%Y_%m_%d")
       file_name = f'failed_process_{today_date}_{year_process}{month}.json'
-      write_failed_sheets_to_json(BUCKET_RETRY, file_name, names_not_updated, year_process, month)
-    print(f"Finished processing all hostess for the month {month}")
+      write_failed_sheets_to_json(BUCKET_RETRY, file_name, names_not_updated, year_process, month,attempt=attempts)
 
+    if isinstance(host_names,list):
+      print(f"Finished processing {','.join(host_names)} hostess for the month {month}")
+    elif isinstance(host_names,str) and len(names_not_updated) == 0:
+      print(f"Finished processing all hostess for the month {month}")
+    elif isinstance(host_names,str) and len(names_not_updated) > 0:
+      print(f"Finished processing all hostess except {','.join(names_not_updated)} for the month {month}")
     return
