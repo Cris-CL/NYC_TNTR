@@ -25,7 +25,6 @@ def get_hostess_dict(master_id):
     return hostes_dict
 
 
-
 def clear_formatting(FILE, sheet_name):
     wsht = FILE.worksheet(sheet_name)
     sheetId = int(wsht._properties["sheetId"])
