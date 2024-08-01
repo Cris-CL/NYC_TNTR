@@ -2,6 +2,7 @@ import gspread
 import google.auth
 from time import sleep
 
+
 def get_hostess_dict(master_id):
     try:
         try:
