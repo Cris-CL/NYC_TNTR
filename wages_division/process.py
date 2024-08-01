@@ -10,7 +10,6 @@ import gspread
 from time import sleep
 from new_query import create_new_query
 from sheets_util import *
-import locale
 import calendar
 import datetime
 import json
