@@ -1,5 +1,6 @@
 from time import sleep
 
+
 def clear_formatting(FILE, sheet_name):
     wsht = FILE.worksheet(sheet_name)
     sheetId = int(wsht._properties["sheetId"])
@@ -7,17 +8,13 @@ def clear_formatting(FILE, sheet_name):
         "requests": [
             {
                 "repeatCell": {
-                    "range": {
-                        "sheetId": sheetId
-                    },
-                    "cell": {
-                        "userEnteredFormat": {}
-                    },
-                    "fields": "userEnteredFormat"
-                }
-            }
-        ]
-    }
+                    "range": {"sheetId": sheetId},
+                    "cell": {"userEnteredFormat": {}},
+                    "fields": "userEnteredFormat",
+                    }
+             }
+            ]
+        }
     try:
         FILE.batch_update(body)
     except:
