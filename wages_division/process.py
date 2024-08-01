@@ -10,6 +10,7 @@ import gspread
 from time import sleep
 from new_query import create_new_query
 from get_spread_info import get_hostess_dict
+from sheets_util import clear_formatting
 import locale
 import calendar
 import datetime
@@ -456,6 +457,7 @@ def update_all_sheets(results_df, sh_hostess_dict, year, month):
                     )
                 else:
                     active_worksheet = sh.worksheet(new_sheet_name)
+                    clear_formatting(FILE=sh, sheet_name=new_sheet_name)
 
                 #### Here maybe we need to check if the day we want to update is already there
                 active_worksheet.clear()  ### Maybe no need to clear the sheet, just append the new data
