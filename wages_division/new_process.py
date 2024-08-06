@@ -115,7 +115,11 @@ def calc_totals_nrws(worksheet, year, month):
 
         return True
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        try:
+            print("Something happened in file: ",worksheet.spreadsheet.title)
+        except:
+            pass
+        print(f"An error occurred in calc_totals_nrws: {str(e)}",type(e))
         return False
 
 
@@ -230,7 +234,6 @@ def process_hostess(name, results_df, sh_hostess_dict, year, month):
         bool: True if the hostess's spreadsheet was successfully updated, False otherwise.
     """
     waiting_time = 10
-    print("process_hostess 1")
     while True:
         try:
             id_sh = sh_hostess_dict.get(name)
@@ -239,29 +242,25 @@ def process_hostess(name, results_df, sh_hostess_dict, year, month):
                 return False
 
             sh = get_spreadsheet(spreadsheet_id=id_sh)
-            print("process_hostess 2")
             if not validate_spreadsheet_name(sh, name):
                 return False
 
             df_temp = get_specific_hostess_df(results_df, name)
-            print("process_hostess 3")
             if df_temp.empty:
                 print(f"No data for {name}")
                 return False
 
             active_worksheet = prepare_worksheet(sh, df_temp, year, month)
-            print("process_hostess 4")
 
             update_worksheet(active_worksheet, df_temp)
             calc_totals_nrws(active_worksheet, year, month)
-            print("process_hostess 5")
 
             try:
                 format_worksheet(active_worksheet)
                 resize_columns(FILE=sh, sheet_name=active_worksheet.title)
             except Exception as e:
                 print(f"Couldn't format {name} Sheet")
-                print(e)
+                print(e,type(e))
 
             sleep(6)
             return True
