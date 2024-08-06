@@ -35,8 +35,6 @@ def process_sheet(request):
     except Exception as e:
       print(e)
       http_status='',400
-    # main_process("test",2)
-    # print("Date and time of update ====>")
     http_status=jsonify({'status':'success'}),200
   else:
     http_status='',400
