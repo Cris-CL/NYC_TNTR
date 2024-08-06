@@ -85,12 +85,11 @@ def process_sheets_from_master(month,year_process,host_names='All',attempts=1):
     hostess_dict = get_hostess_dict(master_id)
     if isinstance(host_names,list):
       try:
-        # lis_names = host_names.replace("[","").replace("]","").replace("'","").replace(" ","").split(",")
         lis_names = host_names
         hostess_dict = {name_sing:hostess_dict.get(name_sing,"") for name_sing in lis_names}
-      except:
+      except Exception as e:
         print("Couldn't process individual names")
-
+        print(e,type(e))
 
     results_df = get_dataframe(month=month, year=year_process)
     try:
