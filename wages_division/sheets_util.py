@@ -1,6 +1,7 @@
 import gspread
 import google.auth
 from time import sleep
+import calendar
 
 
 def get_hostess_dict(master_id):
@@ -188,3 +189,22 @@ def clean_cell(unit_cell):
     except:
         pass
     return unit_cell
+
+
+def days_in_month(date_string):
+    try:
+        year = int(date_string[0:4])
+        month = int(date_string[4:6])
+    except ValueError:
+        return "Invalid date format. Please use 'yyyymmdd' format."
+
+    _, num_days = calendar.monthrange(year, month)
+    return num_days
+
+
+def calc_gensen(subtotal, days_in_month):
+
+    if (subtotal - 5000 * days_in_month) * 0.1021 > 0:
+        return round(-(subtotal - 5000 * days_in_month) * 0.1021)
+    else:
+        return 0
