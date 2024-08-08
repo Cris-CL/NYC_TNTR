@@ -116,10 +116,10 @@ def calc_totals_nrws(worksheet, year, month):
         return True
     except Exception as e:
         try:
-            print("Something happened in file: ", worksheet.spreadsheet.title)
+            print("Something happened in file: ",worksheet.spreadsheet.title)
         except:
             pass
-        print(f"An error occurred in calc_totals_nrws: {str(e)}", type(e))
+        print(f"An error occurred in calc_totals_nrws: {str(e)}",type(e))
         return False
 
 
@@ -138,11 +138,15 @@ def get_spreadsheet(spreadsheet_name=None, spreadsheet_id=None):
     gc = gspread.authorize(credentials)
 
     # Open the Google Sheets document
-    if spreadsheet_id:
-        sh = gc.open_by_key(spreadsheet_id)
-    else:
-        sh = gc.open(spreadsheet_name)
-    return sh
+    try:
+        if spreadsheet_id:
+            sh = gc.open_by_key(spreadsheet_id)
+        else:
+            sh = gc.open(spreadsheet_name)
+        return sh
+    except Exception as e:
+        print("Error in get_spreadsheet")
+        raise e
 
 
 def get_specific_hostess_df(df, hostess_name):
@@ -187,13 +191,15 @@ def get_specific_hostess_df(df, hostess_name):
         "TOTAL_T": "SUBTOTAL_395",
         # '':'',
     }
+    try:
+        loc_df = loc_df[loc_df["hostess_name"] == hostess_name][columns_ind].copy()
 
-    loc_df = loc_df[loc_df["hostess_name"] == hostess_name][columns_ind].copy()
+        loc_df.columns = [new_names.get(col_old, col_old) for col_old in loc_df.columns]
 
-    loc_df.columns = [new_names.get(col_old, col_old) for col_old in loc_df.columns]
-
-    loc_df.columns = [col.replace("_T", "_395") for col in loc_df.columns]
-
+        loc_df.columns = [col.replace("_T", "_395") for col in loc_df.columns]
+    except Exception as e:
+        print(f"Error in get_specific_hostess_df for {hostess_name}")
+        raise e
     return loc_df
 
 
@@ -260,7 +266,7 @@ def process_hostess(name, results_df, sh_hostess_dict, year, month):
                 resize_columns(FILE=sh, sheet_name=active_worksheet.title)
             except Exception as e:
                 print(f"Couldn't format {name} Sheet")
-                print(e, type(e))
+                print(e,type(e))
 
             sleep(6)
             return True
@@ -306,21 +312,25 @@ def prepare_worksheet(sh, df_temp, year, month):
     Returns:
         Worksheet: The active worksheet ready for updates.
     """
-    sheets = [sht_name.title for sht_name in sh.worksheets()]
-    month_str = str(month).zfill(2)
-    new_sheet_name = f"{year}{month_str}"
+    try:
+        sheets = [sht_name.title for sht_name in sh.worksheets()]
+        month_str = str(month).zfill(2)
+        new_sheet_name = f"{year}{month_str}"
 
-    if new_sheet_name not in sheets:
-        active_worksheet = sh.add_worksheet(
-            title=new_sheet_name,
-            rows=str(df_temp.shape[0]),
-            cols=str(df_temp.shape[1]),
-        )
-    else:
-        active_worksheet = sh.worksheet(new_sheet_name)
-        clear_formatting(FILE=sh, sheet_name=new_sheet_name)
+        if new_sheet_name not in sheets:
+            active_worksheet = sh.add_worksheet(
+                title=new_sheet_name,
+                rows=str(df_temp.shape[0]),
+                cols=str(df_temp.shape[1]),
+            )
+        else:
+            active_worksheet = sh.worksheet(new_sheet_name)
+            clear_formatting(FILE=sh, sheet_name=new_sheet_name)
 
-    active_worksheet.clear()
+        active_worksheet.clear()
+    except Exception as e:
+        print(f"Error in prepare_worksheet for {year} {month}")
+        raise e
     return active_worksheet
 
 
@@ -332,17 +342,21 @@ def update_worksheet(active_worksheet, df_temp):
         active_worksheet (Worksheet): The worksheet to be updated.
         df_temp (DataFrame): The DataFrame with the hostess data to be updated.
     """
-    cell_list = active_worksheet.range(1, 1, len(df_temp) + 1, len(df_temp.columns))
+    try:
+        cell_list = active_worksheet.range(1, 1, len(df_temp) + 1, len(df_temp.columns))
 
-    for cell in cell_list:
-        if cell.row == 1:
-            cell.value = df_temp.columns[cell.col - 1]
-        else:
-            cell.value = str(df_temp.iloc[cell.row - 2, cell.col - 1])
+        for cell in cell_list:
+            if cell.row == 1:
+                cell.value = df_temp.columns[cell.col - 1]
+            else:
+                cell.value = str(df_temp.iloc[cell.row - 2, cell.col - 1])
 
-    cell_list = [clean_cell(cell_dirty) for cell_dirty in cell_list]
-    active_worksheet.resize(rows=str(df_temp.shape[0]), cols=str(df_temp.shape[1]))
-    active_worksheet.update_cells(cell_list, value_input_option="USER_ENTERED")
+        cell_list = [clean_cell(cell_dirty) for cell_dirty in cell_list]
+        active_worksheet.resize(rows=str(df_temp.shape[0]), cols=str(df_temp.shape[1]))
+        active_worksheet.update_cells(cell_list, value_input_option="USER_ENTERED")
+    except Exception as e:
+        print("Error in update_worksheet")
+        raise e
 
 
 def handle_rate_limit(waiting_time, name):
@@ -371,7 +385,7 @@ def handle_other_errors(name, error):
         name (str): The name of the hostess being processed.
         error (Exception): The exception that occurred.
     """
-    print(f"An error occurred while processing {name}")
+    print(f"Other error handler -- An error occurred while processing {name}")
     print(error, type(error))
 
 
