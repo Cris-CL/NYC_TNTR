@@ -342,21 +342,29 @@ def update_worksheet(active_worksheet, df_temp):
         active_worksheet (Worksheet): The worksheet to be updated.
         df_temp (DataFrame): The DataFrame with the hostess data to be updated.
     """
-    try:
-        cell_list = active_worksheet.range(1, 1, len(df_temp) + 1, len(df_temp.columns))
+    amount_try = 0
+    while True:
+        try:
+            cell_list = active_worksheet.range(1, 1, len(df_temp) + 1, len(df_temp.columns))
 
-        for cell in cell_list:
-            if cell.row == 1:
-                cell.value = df_temp.columns[cell.col - 1]
+            for cell in cell_list:
+                if cell.row == 1:
+                    cell.value = df_temp.columns[cell.col - 1]
+                else:
+                    cell.value = str(df_temp.iloc[cell.row - 2, cell.col - 1])
+
+            cell_list = [clean_cell(cell_dirty) for cell_dirty in cell_list]
+            active_worksheet.resize(rows=str(df_temp.shape[0]), cols=str(df_temp.shape[1]))
+            active_worksheet.update_cells(cell_list, value_input_option="USER_ENTERED")
+        except Exception as e:
+            print("Error in update_worksheet")
+            if amount_try < 1:
+                amount_try += 1
+                print(f'Retry for update_worksheet number {amount_try}')
+                sleep(0.6)
+                continue
             else:
-                cell.value = str(df_temp.iloc[cell.row - 2, cell.col - 1])
-
-        cell_list = [clean_cell(cell_dirty) for cell_dirty in cell_list]
-        active_worksheet.resize(rows=str(df_temp.shape[0]), cols=str(df_temp.shape[1]))
-        active_worksheet.update_cells(cell_list, value_input_option="USER_ENTERED")
-    except Exception as e:
-        print("Error in update_worksheet")
-        raise e
+                raise e
 
 
 def handle_rate_limit(waiting_time, name):
