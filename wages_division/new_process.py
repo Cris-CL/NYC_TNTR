@@ -126,7 +126,6 @@ def calc_totals_nrws(worksheet, year, month):
 def get_spreadsheet(spreadsheet_name=None, spreadsheet_id=None):
     # Specify the Google Sheets document and worksheet
 
-    # credentials, _ = google.auth.default()
     credentials, _ = google.auth.default(
         scopes=[
             "https://www.googleapis.com/auth/cloud-platform",
@@ -189,7 +188,6 @@ def get_specific_hostess_df(df, hostess_name):
         "X": "EXTRA",
         "X395": "EXTRA_395",
         "TOTAL_T": "SUBTOTAL_395",
-        # '':'',
     }
     try:
         loc_df = loc_df[loc_df["hostess_name"] == hostess_name][columns_ind].copy()
