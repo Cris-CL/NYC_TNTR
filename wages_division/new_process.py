@@ -116,10 +116,10 @@ def calc_totals_nrws(worksheet, year, month):
         return True
     except Exception as e:
         try:
-            print("Something happened in file: ",worksheet.spreadsheet.title)
+            print("Something happened in file: ", worksheet.spreadsheet.title)
         except:
             pass
-        print(f"An error occurred in calc_totals_nrws: {str(e)}",type(e))
+        print(f"An error occurred in calc_totals_nrws: {str(e)}", type(e))
         return False
 
 
@@ -266,7 +266,7 @@ def process_hostess(name, results_df, sh_hostess_dict, year, month):
                 resize_columns(FILE=sh, sheet_name=active_worksheet.title)
             except Exception as e:
                 print(f"Couldn't format {name} Sheet")
-                print(e,type(e))
+                print(e, type(e))
 
             sleep(6)
             return True
