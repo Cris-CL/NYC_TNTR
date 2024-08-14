@@ -51,7 +51,7 @@ def format_worksheet(worksheet):
 
     cell_types = {
         "number": {"numberFormat": {"type": "NUMBER", "pattern": "0"}},
-        "number_decimal": {"numberFormat": {"type": "NUMBER", "pattern": "#.#0"}},
+        "number_decimal": {"numberFormat": {"type": "NUMBER", "pattern": "#0.#0"}},
         "time": {"numberFormat": {"type": "TIME", "pattern": "hh:mm:ss am/pm"}},
         "currency": {"numberFormat": {"type": "CURRENCY", "pattern": "[$¥-411]#,##0"}},
     }
