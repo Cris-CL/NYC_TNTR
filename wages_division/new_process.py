@@ -272,6 +272,7 @@ def process_hostess(name, results_df, sh_hostess_dict, year, month):
         except Exception as e:
             if "RATE_LIMIT_EXCEEDED" in str(e):
                 waiting_time = handle_rate_limit(waiting_time, name)
+                sleep(waiting_time)
             else:
                 handle_other_errors(name, e)
                 return False
