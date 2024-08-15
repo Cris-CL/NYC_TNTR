@@ -18,11 +18,4 @@ def process_message(event, context):
         load_and_upload(file_uri,file_name)
     else:
         print("Received message with missing data")
-
-    # Acknowledge the message
-    # try:
-    #     print(event)
-    #     print(type(event))
-    # except Exception as e:
-    #     print(e)
     return
