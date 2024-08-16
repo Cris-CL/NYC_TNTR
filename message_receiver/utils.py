@@ -336,7 +336,7 @@ def load_file(uri, file_name):
             df["DAY"] = df["DAY"].astype("str")
             df = fix_time_assis(df)
             df = remove_nas(df)
-            return df.copy
+            return df.copy()
 
         elif file_type == "nippo":
             df = pd.read_excel(
