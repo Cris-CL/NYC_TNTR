@@ -8,6 +8,7 @@ TABLE_3 = os.environ["TABLE_3"]
 TABLE_4 = os.environ["TABLE_4"]
 ORIGIN_BUCKET = os.environ["ORIGIN_BUCKET"]
 DESTINATION_BUCKET = os.environ["DESTINATION_BUCKET"]
+PROCESSED_BUCKET = os.environ["PROCESSED_BUCKET"]
 
 upload_dict = {
     "assis": TABLE_1,
