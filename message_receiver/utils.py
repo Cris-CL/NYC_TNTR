@@ -4,10 +4,7 @@ import re
 import pandas as pd
 from google.cloud import bigquery, storage
 from datetime import datetime
-from assis import assis_jp_en
-from goukei_data import gd_jp_en
-from goukei_shosai import gs_jp_en
-from nippo import nippo_jp_en
+from parameters_tantra import *
 
 
 def clean_dict(dict_in):
@@ -22,6 +19,23 @@ assis_jp_en = clean_dict(assis_jp_en)
 gd_jp_en = clean_dict(gd_jp_en)
 gs_jp_en = clean_dict(gs_jp_en)
 nippo_jp_en = clean_dict(nippo_jp_en)
+
+
+def remove_nas(df):
+    try:
+        cleaned_df = df.copy()
+        for col in cleaned_df.columns:
+            cleaned_df[col] = cleaned_df[col].apply(
+                lambda x: None
+                if isinstance(x, str)
+                and x.lower() in ["nan", "none", "<na>", "<nan>", "", " "]
+                else x
+            )
+        return cleaned_df
+    except Exception as e:
+        print(e)
+        print("remove_nas: Couldn't clean the null values")
+        return df
 
 
 def get_timestamp(timezone_name):
@@ -47,7 +61,6 @@ def get_date_from_file(file_name):
                 .replace(" ", "")
                 .split("-")
             )
-            # print(date_ls)
             timezone_name = "Asia/Tokyo"
             stamp_now = datetime.now(tz=pytz.timezone(timezone_name))
             ## day format
@@ -238,10 +251,7 @@ def clean_assis(df):
     except:
         print("Problem with clean_assis trying to convert string to number")
     df = df.astype({col: str_col.get(col, "float64") for col in df.columns})
-    for col in str_col.keys():
-        df[col] = df[col].apply(
-            lambda x: None if x in ["nan", "none", "NAN", "NaN", "", " "] else x
-        )
+    df = remove_nas(df)
     return df.copy()
 
 
@@ -253,12 +263,7 @@ def clean_nippo(df):
     df = df.astype({col: ni_str_col.get(col, "float64") for col in df.columns})
     df = df.astype({"day": "int64"})
 
-    for col in ni_str_col.keys():
-        df[col] = df[col].apply(
-            lambda x: None
-            if isinstance(x, str) and x in ["nan", "none", "NAN", "NaN", "", " "]
-            else x
-        )
+    df = remove_nas(df)
     return df.copy()
 
 
@@ -274,12 +279,7 @@ def clean_shosai(df):
         "cp_in_charge": "str",
     }
     df = df.astype({col: gs_str_col.get(col, "float64") for col in df.columns})
-    for col in gs_str_col.keys():
-        df[col] = df[col].apply(
-            lambda x: None
-            if isinstance(x, str) and x in ["nan", "none", "NAN", "NaN", "", " "]
-            else x
-        )
+    df = remove_nas(df)
     cp_columns = [
         "cp_code_bottle",
         "cp_bottle",
@@ -316,13 +316,74 @@ def clean_goukei_data(df):
     df["visit_time"] = df["visit_time"].map(str)
     df["hostess_name"] = df["hostess_name"].map(str)
 
-    for col_str in gd_str_col.keys():
-        df[col_str] = df[col_str].apply(
-            lambda x: None
-            if isinstance(x, str)
-            and x.lower().replace(" ", "") in ["nan", "none", "NAN", "NaN", "", " "]
-            else x
-        )
+    df = remove_nas(df)
+    return df.copy()
+
+
+def assist_df_process(path, file_name):
+    try:
+        df = pd.read_excel(path, index_col=False, skipfooter=1, engine="openpyxl")
+        df.columns = [col_wrong.replace(" ", "") for col_wrong in df.columns]
+        df = df[assis_jp_en.keys()]
+        df.columns = [assis_jp_en[col] for col in df.columns]
+        df = clean_assis(df)
+        df = add_file_name_to_df(df, file_name)
+        df = add_date_to_df(df)
+        df.insert(0, "DAY", get_date_from_file(file_name))
+        df["DAY"] = df["DAY"].astype("str")
+        df = fix_time_assis(df)
+    except Exception as e:
+        print("assist_df_process: Error loading assist df")
+        raise e
+    return df.copy()
+
+
+def shosai_df_process(path, file_name):
+    try:
+        df = pd.read_excel(path, index_col=False, engine="openpyxl")
+        df.columns = [col_wrong.replace(" ", "") for col_wrong in df.columns]
+        df = df[gs_jp_en.keys()]
+        df.columns = [gs_jp_en[col] for col in df.columns]
+        df = clean_shosai(df)
+        df = get_name_from_order(df)
+        df = get_shared_bottle(df)
+        df = add_file_name_to_df(df, file_name)
+        df = add_date_to_df(df)
+    except Exception as e:
+        print("shosai_df_process: Error loading shosai df")
+        raise e
+    return df.copy()
+
+
+def goukei_df_process(path, file_name):
+    try:
+        df = pd.read_excel(path, index_col=False, skiprows=5, engine="openpyxl")
+        df.columns = [col_wrong.replace(" ", "") for col_wrong in df.columns]
+        df = df[gd_jp_en.keys()]
+        df.columns = [gd_jp_en[col] for col in df.columns]
+        df = clean_goukei_data(df)
+        df = add_file_name_to_df(df, file_name)
+        df = add_date_to_df(df)
+    except Exception as e:
+        print("goukei_df_process: Error loading goukei df")
+        raise e
+    return df.copy()
+
+
+def nippo_df_process(path, file_name):
+    try:
+        df = pd.read_excel(path, index_col=False, skipfooter=2, engine="openpyxl")
+        df.columns = [col_wrong.replace(" ", "") for col_wrong in df.columns]
+        df = df[nippo_jp_en.keys()]
+        df.columns = [nippo_jp_en[col] for col in df.columns]
+        df = clean_nippo(df)
+        df = add_file_name_to_df(df, file_name)
+        df = add_date_to_df(df)
+        month = get_month_nippo(file_name)
+        df = correct_date_nippo(df, month).dropna(axis=0)
+    except Exception as e:
+        print("nippo_df_process: Error loading nippo df")
+        raise e
     return df.copy()
 
 
@@ -334,63 +395,20 @@ def load_file(uri, file_name):
     print(f"trying to load file {file_name}")
     try:
         if file_type == "assis":
-            df = pd.read_excel(
-                file_path, index_col=False, skipfooter=1, engine="openpyxl"
-            )
-            df.columns = [col_wrong.replace(" ", "") for col_wrong in df.columns]
-            df = df[assis_jp_en.keys()]
-            df.columns = [assis_jp_en[col] for col in df.columns]
-            df = clean_assis(df)
-            df = add_file_name_to_df(df, file_name)
-            df = add_date_to_df(df)
-            df.insert(0, "DAY", get_date_from_file(file_name))
-            df["DAY"] = df["DAY"].astype("str")
-            df = fix_time_assis(df)
-            return df
-
+            df = assist_df_process(file_path, file_name)
         elif file_type == "nippo":
-            df = pd.read_excel(
-                file_path, index_col=False, skipfooter=2, engine="openpyxl"
-            )
-            df.columns = [col_wrong.replace(" ", "") for col_wrong in df.columns]
-            df = df[nippo_jp_en.keys()]
-            df.columns = [nippo_jp_en[col] for col in df.columns]
-            df = clean_nippo(df)
-            df = add_file_name_to_df(df, file_name)
-            df = add_date_to_df(df)
-            month = get_month_nippo(file_name)
-            df = correct_date_nippo(df, month).dropna(axis=0)
-            return df.copy()
-
+            df = nippo_df_process(file_path, file_name)
         elif file_type == "shosai":
-            df = pd.read_excel(file_path, index_col=False, engine="openpyxl")
-            df.columns = [col_wrong.replace(" ", "") for col_wrong in df.columns]
-            df = df[gs_jp_en.keys()]
-            df.columns = [gs_jp_en[col] for col in df.columns]
-            df = clean_shosai(df)
-            df = get_name_from_order(df)
-            df = get_shared_bottle(df)
-            df = add_file_name_to_df(df, file_name)
-            df = add_date_to_df(df)
-            return df.copy()
-
+            df = shosai_df_process(file_path, file_name)
         elif file_type == "goukei_data":
-            df = pd.read_excel(
-                file_path, index_col=False, skiprows=5, engine="openpyxl"
-            )
-            df.columns = [col_wrong.replace(" ", "") for col_wrong in df.columns]
-            df = df[gd_jp_en.keys()]
-            df.columns = [gd_jp_en[col] for col in df.columns]
-            df = clean_goukei_data(df)
-            df = add_file_name_to_df(df, file_name)
-            df = add_date_to_df(df)
-            return df.copy()
-
+            df = goukei_df_process(file_path, file_name)
         else:
             print(file_type)
             return print(f"{file_name} unknown file type")
+        df = remove_nas(df)
+        return df
     except Exception as e:
-        print(e)
+        print("Error load_file: ", e, type(e))
         return print(f"Error loading file {file_name}")
 
 
@@ -409,7 +427,7 @@ def get_list_reports(dataset, table, row):
             rows = query_job.result()
             list_reports_uploaded = [row_it[row] for row_it in rows]
         except Exception as e:
-            print(e)
+            print("Error get_list_reports: ", e, type(e))
             list_reports_uploaded = []
     return list_reports_uploaded
 
@@ -423,7 +441,7 @@ def check_exist_db(file_name, dataset, table, row):
         list_files = get_list_reports(dataset, table, row)
     except Exception as e:
         list_files = []
-        print(e)
+        print("Error check_exist_db: ", e, type(e))
 
     if file_name in list_files:
         return True
@@ -447,9 +465,6 @@ def file_exist_already(file_name, dataset, table, row):
         delete_job.result()
         print(f"{file_name} updated from {table}")
     return
-
-
-# df_1.to_gbq(destination_table=f'{dataset_id}.{table_1}',if_exists='append',progress_bar=False)
 
 
 def upload_bq(df, table_id, project_id):
@@ -488,7 +503,6 @@ def save_processed_file(df, file_name):
     """
     After the file is processed it is saved in a bucket
     """
-    PROCESSED_BUCKET = os.environ["PROCESSED_BUCKET"]
     try:
         storage_client = storage.Client()
         file_name = file_name.replace(".xlsx", ".csv")
@@ -497,27 +511,12 @@ def save_processed_file(df, file_name):
         blob.upload_from_string(df.to_csv(index=False), content_type="csv/txt")
     except Exception as e:
         print(
-            f"Error at saving processed file for {file_name} -- type: {type(e)} -- {e}"
+            f"Error at save_processed_file file for {file_name} -- type: {type(e)} -- {e}"
         )
     return
 
 
 def full_upload_process(df, file_name):
-    PROJECT_ID = os.environ["PROJECT_ID"]
-    DATASET = os.environ["DATASET"]
-    TABLE_1 = os.environ["TABLE_1"]
-    TABLE_2 = os.environ["TABLE_2"]
-    TABLE_3 = os.environ["TABLE_3"]
-    TABLE_4 = os.environ["TABLE_4"]
-    ORIGIN_BUCKET = os.environ["ORIGIN_BUCKET"]
-    DESTINATION_BUCKET = os.environ["DESTINATION_BUCKET"]
-
-    upload_dict = {
-        "assis": TABLE_1,
-        "nippo": TABLE_2,
-        "shosai": TABLE_3,
-        "goukei_data": TABLE_4,
-    }
     try:
         file_type = identify_file(file_name)
         table_upload = upload_dict.get(file_type, "unknown")
@@ -527,9 +526,9 @@ def full_upload_process(df, file_name):
         row = "FILE_NAME"
         check = check_exist_db(file_name, DATASET, table_upload, row)
     except Exception as e:
-        print("Error in full_upload_process check step")
-        print(e)
-    if check == True:
+        print("Error in full_upload_process check_exist_db step")
+        print(e, type(e))
+    if check:
         timestamp = (
             get_timestamp("Asia/Tokyo")
             .replace(" ", "_")
@@ -542,13 +541,13 @@ def full_upload_process(df, file_name):
         except Exception as e:
             print("Error in full_upload_process move step")
             print(e)
-    elif check == False:
+    else:
         print("New file")
         try:
             move_file(ORIGIN_BUCKET, file_name, DESTINATION_BUCKET, file_name)
         except Exception as e:
             print("Error in full_upload_process move step new file")
-            print(e)
+            print(e, type(e))
     dataset_table = f"{DATASET}.{table_upload}"
     upload_bq(df, dataset_table, PROJECT_ID)
     file_exist_already(file_name, DATASET, table_upload, row)
@@ -559,5 +558,8 @@ def full_upload_process(df, file_name):
 
 def load_and_upload(uri, file_name):
     df = load_file(uri, file_name)
-    full_upload_process(df, file_name)
+    if not isinstance(df,pd.DataFrame):
+        print("Problem with dataframe, finishing process")
+    else:
+        full_upload_process(df, file_name)
     return
