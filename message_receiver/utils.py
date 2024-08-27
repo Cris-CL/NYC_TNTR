@@ -406,10 +406,11 @@ def load_file(uri, file_name):
             print(file_type)
             return print(f"{file_name} unknown file type")
         df = remove_nas(df)
-        return df
     except Exception as e:
         print("Error load_file: ", e, type(e))
-        return print(f"Error loading file {file_name}")
+        print(f"Error loading file {file_name}")
+        df = pd.DataFrame()
+    return df
 
 
 def get_list_reports(dataset, table, row):
@@ -558,8 +559,10 @@ def full_upload_process(df, file_name):
 
 def load_and_upload(uri, file_name):
     df = load_file(uri, file_name)
-    if not isinstance(df,pd.DataFrame):
-        print("Problem with dataframe, finishing process")
-    else:
-        full_upload_process(df, file_name)
+    if df.empty:
+        print(f"Problem with file: {file_name}")
+        print(uri)
+        print("Aborting process")
+        return
+    full_upload_process(df, file_name)
     return
