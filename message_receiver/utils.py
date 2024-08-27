@@ -412,7 +412,6 @@ def load_file(uri, file_name):
     file_path = uri
 
     print(f"trying to load file: {file_name} from the uri: {uri}")
-    df = pd.DataFrame()
     check = check_bucket(ORIGIN_BUCKET,file_name)
     if not check:
         print(f"File with name: {file_name} is not in {ORIGIN_BUCKET}")
@@ -433,6 +432,7 @@ def load_file(uri, file_name):
         except Exception as e:
             print("Error load_file: ", e, type(e))
             print(f"Error loading file {file_name}")
+            df = pd.DataFrame()
     return df
 
 
