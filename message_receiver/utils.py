@@ -399,12 +399,15 @@ def check_bucket(bucket_name,file_name):
     Returns:
     - Boolean: True if the filename is contained in the bucket, False otherwise
     """
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    list_names = []
-    for blob_data in bucket.list_blobs():
-        list_names.append(blob_data.name)
-    return file_name in list_names
+    try:
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+        list_names = []
+        for blob_data in bucket.list_blobs():
+            list_names.append(blob_data.name)
+        return file_name in list_names
+    except:
+        return False
 
 
 def load_file(uri, file_name):
