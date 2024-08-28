@@ -430,7 +430,7 @@ def load_file(uri, file_name):
                 df = goukei_df_process(file_path, file_name)
             else:
                 print(file_type)
-                return print(f"{file_name} unknown file type")
+                print(f"{file_name} unknown file type")
             df = remove_nas(df)
         except Exception as e:
             print("Error load_file: ", e, type(e))
