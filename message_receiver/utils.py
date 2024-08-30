@@ -413,8 +413,8 @@ def check_bucket(bucket_name, file_name):
 def load_file(uri, file_name):
     file_type = identify_file(file_name)
     file_path = uri
-
-    print(f"trying to load file: {file_name} from the uri: {uri}")
+    df = pd.DataFrame()  # Initialize df as an empty DataFrame
+    print(f"Trying to load file: {file_name} from the URI: {uri}")
     check = check_bucket(ORIGIN_BUCKET, file_name)
     if not check:
         print(f"File with name: {file_name} is not in {ORIGIN_BUCKET}")
@@ -429,13 +429,15 @@ def load_file(uri, file_name):
             elif file_type == "goukei_data":
                 df = goukei_df_process(file_path, file_name)
             else:
-                print(file_type)
-                print(f"{file_name} unknown file type")
-            df = remove_nas(df)
+                print(f"{file_name} has an unknown file type: {file_type}")
+
+            if not df.empty:  # Only remove NaNs if df is not empty
+                df = remove_nas(df)
         except Exception as e:
-            print("Error load_file: ", e, type(e))
+            print("Error in load_file:", e, type(e))
             print(f"Error loading file {file_name}")
-            df = pd.DataFrame()
+            df = pd.DataFrame()  # Ensure df is an empty DataFrame on error
+
     return df
 
 
