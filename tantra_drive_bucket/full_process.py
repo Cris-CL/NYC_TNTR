@@ -53,14 +53,5 @@ def full_process():
       except Exception as e:
         print(e)
 
-  # for file_name in dict_changes.keys():
-  #   if isinstance(file_name, str) and '.xlsx' in file_name:
-  #     file_id = dict_changes[file_name]
-  #     print(f"Moving {file_name} id: {file_id}")
-  #     try:
-  #       transfer_file_between_drive_and_gcs(file_id,BUCKET_NAME,file_name)
-  #     except Exception as e:
-  #       print(e)
-
   changes_to_bq(df_changes,DATASET,TABLE_NAME)
   return
