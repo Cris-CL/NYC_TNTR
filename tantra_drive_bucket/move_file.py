@@ -29,12 +29,14 @@ def check_bucket(bucket_name, file_name):
         return False
 
 
-def transfer_file_between_drive_and_gcs(drive_file_id,gcs_bucket_name,gcs_object_name,creds=None):
+def transfer_file_between_drive_and_gcs(
+    drive_file_id, gcs_bucket_name, gcs_object_name, creds=None
+):
     if not creds:
-      creds, _ = google.auth.default()
+        creds, _ = google.auth.default()
     try:
         # Initialize Google Drive API client
-        drive_service = build('drive', 'v3', credentials=creds)
+        drive_service = build("drive", "v3", credentials=creds)
 
         # Initialize Google Cloud Storage client
         gcs_client = storage.Client()
@@ -49,7 +51,7 @@ def transfer_file_between_drive_and_gcs(drive_file_id,gcs_bucket_name,gcs_object
             status, done = downloader.next_chunk()
 
         # Upload the file to Google Cloud Storage
-        if check_bucket(gcs_bucket_name,gcs_object_name):
+        if check_bucket(gcs_bucket_name, gcs_object_name):
             print(f"File: {gcs_object_name} Already  in {gcs_bucket_name} bucket")
             return False
         bucket = gcs_client.get_bucket(gcs_bucket_name)
