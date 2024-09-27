@@ -387,29 +387,58 @@ def nippo_df_process(path, file_name):
     return df.copy()
 
 
+def check_bucket(bucket_name, file_name):
+    """
+    Function that given a bucket_name returns true if there is a file named
+    file_name inside or false if is not.
+
+    Parameters:
+    - bucket_name (String) : Name of the bucket to check
+    - file_name (String) : Name of the file we want to know if is in the bucket
+
+    Returns:
+    - Boolean: True if the filename is contained in the bucket, False otherwise
+    """
+    try:
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+        list_names = []
+        for blob_data in bucket.list_blobs():
+            list_names.append(blob_data.name)
+        return file_name in list_names
+    except:
+        return False
+
+
 def load_file(uri, file_name):
     file_type = identify_file(file_name)
-    print(file_name)
-    print(uri)
     file_path = uri
-    print(f"trying to load file {file_name}")
-    try:
-        if file_type == "assis":
-            df = assist_df_process(file_path, file_name)
-        elif file_type == "nippo":
-            df = nippo_df_process(file_path, file_name)
-        elif file_type == "shosai":
-            df = shosai_df_process(file_path, file_name)
-        elif file_type == "goukei_data":
-            df = goukei_df_process(file_path, file_name)
-        else:
-            print(file_type)
-            return print(f"{file_name} unknown file type")
-        df = remove_nas(df)
-        return df
-    except Exception as e:
-        print("Error load_file: ", e, type(e))
-        return print(f"Error loading file {file_name}")
+    df = pd.DataFrame()  # Initialize df as an empty DataFrame
+    print(f"Trying to load file: {file_name} from the URI: {uri}")
+    check = check_bucket(ORIGIN_BUCKET, file_name)
+    if not check:
+        print(f"File with name: {file_name} is not in {ORIGIN_BUCKET}")
+    else:
+        try:
+            if file_type == "assis":
+                df = assist_df_process(file_path, file_name)
+            elif file_type == "nippo":
+                df = nippo_df_process(file_path, file_name)
+            elif file_type == "shosai":
+                df = shosai_df_process(file_path, file_name)
+            elif file_type == "goukei_data":
+                df = goukei_df_process(file_path, file_name)
+            else:
+                print(f"{file_name} has an unknown file type: {file_type}")
+
+            if not df.empty:  # Only remove NaNs if df is not empty
+                df = remove_nas(df)
+        except Exception as e:
+            print("Error in load_file:", e, type(e))
+            print(f"Error loading file {file_name}")
+            df = pd.DataFrame()  # Ensure df is an empty DataFrame on error
+
+    return df
 
 
 def get_list_reports(dataset, table, row):
@@ -558,8 +587,10 @@ def full_upload_process(df, file_name):
 
 def load_and_upload(uri, file_name):
     df = load_file(uri, file_name)
-    if not isinstance(df,pd.DataFrame):
-        print("Problem with dataframe, finishing process")
-    else:
-        full_upload_process(df, file_name)
+    if df.empty:
+        print(f"Problem with file: {file_name}")
+        print(uri)
+        print("Aborting process")
+        return
+    full_upload_process(df, file_name)
     return

@@ -115,11 +115,11 @@ def calc_totals_nrws(worksheet, year, month):
 
         return True
     except Exception as e:
-        try:
-            print("Something happened in file: ", worksheet.spreadsheet.title)
-        except:
-            pass
-        print(f"An error occurred in calc_totals_nrws: {str(e)}", type(e))
+        print(
+            f"Error in calc_totals_nrws for file {worksheet.spreadsheet.title} {str(e)}",
+            type(e),
+        )
+        raise e
         return False
 
 
@@ -144,7 +144,7 @@ def get_spreadsheet(spreadsheet_name=None, spreadsheet_id=None):
             sh = gc.open(spreadsheet_name)
         return sh
     except Exception as e:
-        print("Error in get_spreadsheet")
+        print(f"Error in get_spreadsheet with id= {spreadsheet_id}")
         raise e
 
 
@@ -263,9 +263,7 @@ def process_hostess(name, results_df, sh_hostess_dict, year, month):
                 format_worksheet(active_worksheet)
                 resize_columns(FILE=sh, sheet_name=active_worksheet.title)
             except Exception as e:
-                print(f"Couldn't format {name} Sheet")
-                print(e, type(e))
-
+                print(f"Couldn't format {name} Sheet", e, type(e))
             sleep(6)
             return True
 
@@ -274,6 +272,7 @@ def process_hostess(name, results_df, sh_hostess_dict, year, month):
                 waiting_time = handle_rate_limit(waiting_time, name)
                 sleep(waiting_time)
             else:
+                print(f"Error in process_hostess for {name}")
                 handle_other_errors(name, e)
                 return False
 
@@ -325,11 +324,10 @@ def prepare_worksheet(sh, df_temp, year, month):
         else:
             active_worksheet = sh.worksheet(new_sheet_name)
             clear_formatting(FILE=sh, sheet_name=new_sheet_name)
-
-        active_worksheet.clear()
     except Exception as e:
-        print(f"Error in prepare_worksheet for {year} {month}")
+        print(f"Error in prepare_worksheet for sheet {sh.title} {year} {month}")
         raise e
+    active_worksheet.clear()
     return active_worksheet
 
 
@@ -342,21 +340,35 @@ def update_worksheet(active_worksheet, df_temp):
         df_temp (DataFrame): The DataFrame with the hostess data to be updated.
     """
     amount_try = 0
-    try:
-        cell_list = active_worksheet.range(1, 1, len(df_temp) + 1, len(df_temp.columns))
+    while True:
+        try:
+            cell_list = active_worksheet.range(
+                1, 1, len(df_temp) + 1, len(df_temp.columns)
+            )
 
-        for cell in cell_list:
-            if cell.row == 1:
-                cell.value = df_temp.columns[cell.col - 1]
+            for cell in cell_list:
+                if cell.row == 1:
+                    cell.value = df_temp.columns[cell.col - 1]
+                else:
+                    cell.value = str(df_temp.iloc[cell.row - 2, cell.col - 1])
+
+            cell_list = [clean_cell(cell_dirty) for cell_dirty in cell_list]
+            active_worksheet.resize(
+                rows=str(df_temp.shape[0]), cols=str(df_temp.shape[1])
+            )
+            active_worksheet.update_cells(cell_list, value_input_option="USER_ENTERED")
+            return True
+        except Exception as e:
+            if "JSONDecodeError" in str(e) and amount_try == 0:
+                print(
+                    f"Error in update_worksheet for {active_worksheet.spreadsheet.title}"
+                )
+                raise e
             else:
-                cell.value = str(df_temp.iloc[cell.row - 2, cell.col - 1])
-
-        cell_list = [clean_cell(cell_dirty) for cell_dirty in cell_list]
-        active_worksheet.resize(rows=str(df_temp.shape[0]), cols=str(df_temp.shape[1]))
-        active_worksheet.update_cells(cell_list, value_input_option="USER_ENTERED")
-    except Exception as e:
-        print("Error in update_worksheet")
-        raise e
+                amount_try = amount_try + 1
+                sleep(5)
+                continue
+            raise e
 
 
 def handle_rate_limit(waiting_time, name):
@@ -385,8 +397,11 @@ def handle_other_errors(name, error):
         name (str): The name of the hostess being processed.
         error (Exception): The exception that occurred.
     """
-    print(f"Other error handler -- An error occurred while processing {name}")
-    print(error, type(error))
+    print(
+        f"Other error handler -- An error occurred while processing {name}",
+        error,
+        type(error),
+    )
 
 
 def new_updater(results_df, sh_hostess_dict, year, month):
@@ -408,7 +423,7 @@ def new_updater(results_df, sh_hostess_dict, year, month):
     for name in list_hostess:
         if not process_hostess(name, results_df, sh_hostess_dict, year, month):
             names_not_updated.append(name)
-        if len(names_not_updated) > 5:
+        if len(names_not_updated) > 15:
             print("Too many errors, aborting operation")
             return []
     if names_not_updated:
