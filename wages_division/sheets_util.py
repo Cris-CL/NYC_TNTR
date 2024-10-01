@@ -21,7 +21,8 @@ def get_hostess_dict(master_id):
 
         hostes_dict = {A[0]:P[0] for A,P in zip(a_col,p_col)}
     except Exception as e:
-        print(e)
+        print('Error get_hostess_dict')
+        print(e,type(e))
         return False
     return hostes_dict
 
@@ -42,7 +43,8 @@ def clear_formatting(FILE, sheet_name):
         }
     try:
         FILE.batch_update(body)
-    except:
+    except Exception as e:
+        print(e,type(e))
         print(f"Error in clearing format on {sheet_name}")
 
 
@@ -136,13 +138,13 @@ def format_worksheet(worksheet):
                 print(
                     f"Waiting for {format_waiting} seconds before retrying format_worksheet"
                 )
-                print(e)
+                print(e,type(e))
                 sleep(format_waiting)
                 format_waiting = format_waiting + 1
             else:
                 print("problem with formatting")
+                print(e,type(e))
                 raise
-
     return
 
 
@@ -174,8 +176,9 @@ def resize_columns(FILE, sheet_name):
                 )
                 sleep(5)
             else:
-                print(e)
-                print(f"Couldnt resize the sheet {sheet_name}")
+                print(e,type(e))
+                file_name = int(wsht._properties)
+                print(f"Couldnt resize the sheet {sheet_name} on {file_name}")
                 return
 
 
