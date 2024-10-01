@@ -16,6 +16,17 @@ import requests
 from google.cloud import storage
 
 
+def create_retry_message(attempt,year,month,names_list):
+    message = {
+        "type": "retry",
+        "attempt": attempt,
+        "year": year,
+        "month": month,
+        "names": names_list,
+    }
+    return message
+
+
 def write_failed_sheets_to_json(names, year, month, attempt=0):
 
     bucket_name = os.environ["BUCKET_RETRY"]
@@ -23,13 +34,8 @@ def write_failed_sheets_to_json(names, year, month, attempt=0):
     file_name = f"failed_process_{today_date}_{year}{month}.json"
     current_attempt = attempt + 1
 
-    failed_sheets = {
-        "type": "retry",
-        "attempt": current_attempt,
-        "year": year,
-        "month": month,
-        "names": names,
-    }
+    failed_sheets = create_retry_message(current_attempt, year, month, names)
+
     headers = {"Content-Type": "application/json"}
     TEST_FUNCTION = os.environ["TEST_FUNCTION"]
     try:
@@ -72,6 +78,7 @@ def get_dataframe(month=9, year=2023):
 
     for col in results_df.columns:
         results_df[col] = results_df[col].astype(str)
+        results_df[col] = results_df[col].map(lambda x: None if isinstance(x,str) and x.lower() in ('nan', '<na>','0.0') else x)
     return results_df
 
 
@@ -108,14 +115,15 @@ def process_sheets_from_master(month, year_process, host_names="All", attempts=1
         hostess_dict = get_hostess_dict("MASTER_SPREADSHEET_ID")
 
     if len(results_df) < 1:
-        return print(f"No new data for the current month: {month} ")
+        print(f"No new data for the current month: {month} ")
+        return []
     names_not_updated = new_updater(results_df, hostess_dict, year_process, month)
-    if isinstance(names_not_updated, list) and len(names_not_updated) > 0:
+
+    if isinstance(names_not_updated, list) and len(names_not_updated) > 0 and attempts > 1:
         print("Some updates failed, sending retry notice")
         write_failed_sheets_to_json(
             names_not_updated, year_process, month, attempt=attempts
         )
-
     if isinstance(host_names, list):
         print(
             f"Finished processing {','.join(host_names)} hostess for the month {month}"
@@ -126,4 +134,4 @@ def process_sheets_from_master(month, year_process, host_names="All", attempts=1
         print(
             f"Finished processing all hostess except {','.join(names_not_updated)} for the month {month}"
         )
-    return
+    return names_not_updated
