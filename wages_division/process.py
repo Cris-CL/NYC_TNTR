@@ -72,6 +72,7 @@ def get_dataframe(month=9, year=2023):
 
     for col in results_df.columns:
         results_df[col] = results_df[col].astype(str)
+        results_df[col] = results_df[col].map(lambda x: None if isinstance(x,str) and x.lower() in ('nan', '<na>','0.0') else x)
     return results_df
 
 
