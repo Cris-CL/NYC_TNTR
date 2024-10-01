@@ -44,8 +44,8 @@ def clear_formatting(FILE, sheet_name):
     try:
         FILE.batch_update(body)
     except Exception as e:
-        print(e,type(e))
-        print(f"Error in clearing format on {sheet_name}")
+        print(f"Error in clear_formatting on file: {FILE.title} and sheet: {sheet_name}",e,type(e))
+        return
 
 
 def format_worksheet(worksheet):
