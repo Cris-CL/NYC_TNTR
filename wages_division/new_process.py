@@ -115,7 +115,10 @@ def calc_totals_nrws(worksheet, year, month):
 
         return True
     except Exception as e:
-        print(f"An error occurred in calc_totals_nrws for file {worksheet.spreadsheet.title} {str(e)}", type(e))
+        print(
+            f"An error occurred in calc_totals_nrws for file {worksheet.spreadsheet.title} {str(e)}",
+            type(e),
+        )
         raise e
         return False
 
@@ -258,9 +261,20 @@ def process_hostess(name, results_df, sh_hostess_dict, year, month):
 
             try:
                 format_worksheet(active_worksheet)
+            except Exception as e:
+                print(
+                    f"Error in process_hostess format_worksheet step for {name} Sheet",
+                    e,
+                    type(e),
+                )
+            try:
                 resize_columns(FILE=sh, sheet_name=active_worksheet.title)
             except Exception as e:
-                print(f"Couldn't format {name} Sheet",e, type(e))
+                print(
+                    f"Error in process_hostess rezise_columns step for {name} Sheet",
+                    e,
+                    type(e),
+                )
             sleep(6)
             return True
 
@@ -338,7 +352,9 @@ def update_worksheet(active_worksheet, df_temp):
     amount_try = 0
     while True:
         try:
-            cell_list = active_worksheet.range(1, 1, len(df_temp) + 1, len(df_temp.columns))
+            cell_list = active_worksheet.range(
+                1, 1, len(df_temp) + 1, len(df_temp.columns)
+            )
 
             for cell in cell_list:
                 if cell.row == 1:
@@ -347,12 +363,16 @@ def update_worksheet(active_worksheet, df_temp):
                     cell.value = str(df_temp.iloc[cell.row - 2, cell.col - 1])
 
             cell_list = [clean_cell(cell_dirty) for cell_dirty in cell_list]
-            active_worksheet.resize(rows=str(df_temp.shape[0]), cols=str(df_temp.shape[1]))
+            active_worksheet.resize(
+                rows=str(df_temp.shape[0]), cols=str(df_temp.shape[1])
+            )
             active_worksheet.update_cells(cell_list, value_input_option="USER_ENTERED")
             return True
         except Exception as e:
-            if 'JSONDecodeError' in str(e) and amount_try == 0:
-                print(f"Error in update_worksheet for {active_worksheet.spreadsheet.title}")
+            if "JSONDecodeError" in str(e) and amount_try == 0:
+                print(
+                    f"Error in update_worksheet for {active_worksheet.spreadsheet.title}"
+                )
                 raise e
             else:
                 amount_try = amount_try + 1
@@ -387,7 +407,11 @@ def handle_other_errors(name, error):
         name (str): The name of the hostess being processed.
         error (Exception): The exception that occurred.
     """
-    print(f"Other error handler -- An error occurred while processing {name}",error, type(error))
+    print(
+        f"Other error handler -- An error occurred while processing {name}",
+        error,
+        type(error),
+    )
 
 
 def new_updater(results_df, sh_hostess_dict, year, month):
