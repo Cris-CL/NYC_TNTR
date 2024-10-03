@@ -21,9 +21,8 @@ def get_hostess_dict(master_id):
 
         hostes_dict = {A[0]: P[0] for A, P in zip(a_col, p_col)}
     except Exception as e:
-        print("Error get_hostess_dict")
-        print(e, type(e))
-        return False
+        print("Error in get_hostess_dict",e, type(e))
+        return {}
     return hostes_dict
 
 
@@ -207,8 +206,8 @@ def days_in_month(date_string):
 
 
 def calc_gensen(subtotal, days_in_month):
-
-    if (subtotal - 5000 * days_in_month) * 0.1021 > 0:
-        return round(-(subtotal - 5000 * days_in_month) * 0.1021)
+    gensen = - (subtotal - 5000 * days_in_month) * 0.1021
+    if abs(gensen) > 0:
+        return round(gensen)
     else:
         return 0
