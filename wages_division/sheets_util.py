@@ -19,11 +19,10 @@ def get_hostess_dict(master_id):
         a_col = worksheet.get_values("A2:A")
         p_col = worksheet.get_values("P2:P")
 
-        hostes_dict = {A[0]:P[0] for A,P in zip(a_col,p_col)}
+        hostes_dict = {A[0]: P[0] for A, P in zip(a_col, p_col)}
     except Exception as e:
-        print('Error get_hostess_dict')
-        print(e,type(e))
-        return False
+        print("Error in get_hostess_dict",e, type(e))
+        return {}
     return hostes_dict
 
 
@@ -37,14 +36,18 @@ def clear_formatting(FILE, sheet_name):
                     "range": {"sheetId": sheetId},
                     "cell": {"userEnteredFormat": {}},
                     "fields": "userEnteredFormat",
-                    }
-             }
-            ]
-        }
+                }
+            }
+        ]
+    }
     try:
         FILE.batch_update(body)
     except Exception as e:
-        print(f"Error in clear_formatting on file: {FILE.title} and sheet: {sheet_name}",e,type(e))
+        print(
+            f"Error in clear_formatting on file: {FILE.title} and sheet: {sheet_name}",
+            e,
+            type(e),
+        )
         return
 
 
@@ -138,13 +141,11 @@ def format_worksheet(worksheet):
                 print(
                     f"Waiting for {format_waiting} seconds before retrying format_worksheet"
                 )
-                print(e,type(e))
                 sleep(format_waiting)
                 format_waiting = format_waiting + 1
             else:
-                print("problem with formatting")
-                print(e,type(e))
-                raise
+                print(f"Error in format_worksheet for {worksheet.title}", e, type(e))
+                raise e
     return
 
 
@@ -176,9 +177,8 @@ def resize_columns(FILE, sheet_name):
                 )
                 sleep(5)
             else:
-                print(e,type(e))
                 file_name = int(wsht._properties)
-                print(f"Couldnt resize the sheet {sheet_name} on {file_name}")
+                print(f"resize_columns: Couldnt resize the sheet {sheet_name} on {file_name}",e, type(e))
                 return
 
 
@@ -206,8 +206,8 @@ def days_in_month(date_string):
 
 
 def calc_gensen(subtotal, days_in_month):
-
-    if (subtotal - 5000 * days_in_month) * 0.1021 > 0:
-        return round(-(subtotal - 5000 * days_in_month) * 0.1021)
+    gensen = - (subtotal - 5000 * days_in_month) * 0.1021
+    if abs(gensen) > 0:
+        return round(gensen)
     else:
         return 0
