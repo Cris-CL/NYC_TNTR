@@ -10,9 +10,8 @@ from google.cloud import bigquery
 
 
 def create_new_query(month, year):
-    month_str = (2 - len(str(month))) * "0" + str(
-        month
-    )  ## Add a zero if the month is less than 10
+    ## Add a zero if the month is less than 10
+    month_str = (2 - len(str(month))) * "0" + str(month)
     query = f"SELECT * from tantra.HostessWagesForPaySlip('{year}','{month_str}')"
     return query
 
