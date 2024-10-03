@@ -178,7 +178,7 @@ def resize_columns(FILE, sheet_name):
                 sleep(5)
             else:
                 file_name = int(wsht._properties)
-                print(f"Couldnt resize the sheet {sheet_name} on {file_name}",e, type(e))
+                print(f"resize_columns: Couldnt resize the sheet {sheet_name} on {file_name}",e, type(e))
                 return
 
 
