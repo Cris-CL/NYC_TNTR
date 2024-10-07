@@ -8,6 +8,13 @@ from google.cloud import storage
 
 
 def handle_gspread_error(error, function_name, bucket_name):
+    """
+    Handles gspread html errors that occur during processing.
+
+    Args:
+        error (Exception): The exception that occurred.
+        function_name (str): The name of the function where the error happened.
+    """
     error_message = str(error).lower()
     # Search for "Please try again in XX seconds" pattern
     retry_match = re.search(r"please try again in (\d+) seconds", error_message)
@@ -30,6 +37,15 @@ def handle_gspread_error(error, function_name, bucket_name):
 
 
 def save_error_to_bucket(message, file_name, bucket_name):
+    """
+    Creates a file with the contents of special errors and places it on
+    a bucket to not print huge statements in the logs.
+
+    Args:
+        message (str): The contents of the error message.
+        file_name (str): The name of the file to be created.
+        bucket_name (str): The name of the bucket where the file will be placed.
+    """
     # Initialize the Cloud Storage client
     storage_client = storage.Client()
     bucket = storage_client.get_bucket(bucket_name)
@@ -210,7 +226,16 @@ def format_worksheet(worksheet):
 
 
 def resize_columns(FILE, sheet_name):
-    wsht = FILE.worksheet(sheet_name)
+    try_number = 0
+    while True:
+        try:
+            wsht = FILE.worksheet(sheet_name)
+            break
+        except Exception as e:
+            handler = handle_gspread_error(e, "resize_columns part_1", "none")
+            if handler == True and try_number == 0:
+                try_number = try_number + 1
+                continue
     sheetId = int(wsht._properties["sheetId"])
     body = {
         "requests": [
@@ -232,7 +257,7 @@ def resize_columns(FILE, sheet_name):
             FILE.batch_update(body)
             return
         except Exception as e:
-            handler = handle_gspread_error(e, "resize_columns", "none")
+            handler = handle_gspread_error(e, "resize_columns part_2", "none")
             if handler == True and try_number == 0:
                 try_number = try_number + 1
                 continue
