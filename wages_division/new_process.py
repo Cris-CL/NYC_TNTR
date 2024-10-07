@@ -421,11 +421,18 @@ def handle_other_errors(name, error):
         name (str): The name of the hostess being processed.
         error (Exception): The exception that occurred.
     """
-    print(
-        f"Other error handler -- An error occurred while processing {name}",
-        error,
-        type(error),
-    )
+    err_txt = str(error).lower()
+    if 'http' in err_txt:
+        print(
+            f"Other error handler -- got http error while processing {name}",
+            type(error),
+            )
+    else:
+        print(
+            f"Other error handler -- An error occurred while processing {name}",
+            error,
+            type(error),
+        )
 
 
 def new_updater(results_df, sh_hostess_dict, year, month):
