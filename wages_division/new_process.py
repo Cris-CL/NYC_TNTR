@@ -29,98 +29,112 @@ def reverse_list_odd_date(lst):
 def calc_totals_nrws(worksheet, year, month):
     date_str = f"{year}{month}"
     days_in_mon = days_in_month(date_str)
-    try:
-        # Get all values in the worksheet
-        values = worksheet.get_all_values()
+    try_number = 0
+    while True:
+        try:
+            # Get all values in the worksheet
+            values = worksheet.get_all_values()
+            break
+        except Exception as e:
+            hanler = handle_gspread_error(e, "calc_totals_nrws part_1", "nenen")
+            if hanler == True and try_number == 0:
+                try_number = try_number + 1
+                continue
+            else:
+                raise e
+    # Add two empty rows at the bottom
+    num_rows = len(values)
+    num_columns = len(values[0])
+    for _ in range(2):
+        values.append([""] * num_columns)
 
-        # Add two empty rows at the bottom
-        num_rows = len(values)
-        num_columns = len(values[0])
-        for _ in range(2):
-            values.append([""] * num_columns)
+    # Calculate and set totals in the third row
+    start_column = 5  # Column E
+    end_column = 29  # Column AC
 
-        # Calculate and set totals in the third row
-        start_column = 5  # Column E
-        end_column = 29  # Column AC
+    subtotal_row = [""] * num_columns
+    discounts_row = [""] * num_columns
+    grand_total_row = [""] * num_columns
 
-        subtotal_row = [""] * num_columns
-        discounts_row = [""] * num_columns
-        grand_total_row = [""] * num_columns
+    gensen_row = [""] * num_columns
+    paid_amount_row = [""] * num_columns
 
-        gensen_row = [""] * num_columns
-        paid_amount_row = [""] * num_columns
+    for col in range(start_column, end_column + 1):
+        try:
+            column_values = []
+            for row in values:
+                cell_value = row[col - 1]
+                if cell_value.strip().replace(".", "", 1).isdigit():
+                    column_values.append(float(cell_value))
+                else:
+                    # Convert yen currency-formatted values to float
+                    try:
+                        currency_value = float(
+                            cell_value.strip("¥").replace(",", "").replace("¥", "")
+                        )
+                        column_values.append(currency_value)
+                    except ValueError:
+                        pass
 
-        for col in range(start_column, end_column + 1):
-            try:
-                column_values = []
-                for row in values:
-                    cell_value = row[col - 1]
-                    if cell_value.strip().replace(".", "", 1).isdigit():
-                        column_values.append(float(cell_value))
-                    else:
-                        # Convert yen currency-formatted values to float
-                        try:
-                            currency_value = float(
-                                cell_value.strip("¥").replace(",", "").replace("¥", "")
-                            )
-                            column_values.append(currency_value)
-                        except ValueError:
-                            pass
+            column_sum = sum(column_values)
+            subtotal_row[col - 1] = column_sum  # Adjust for 0-based index
+        except ValueError:
+            pass
+    # return subtotal_row
+    # Add "GRAND TOTAL" in column A
 
-                column_sum = sum(column_values)
-                subtotal_row[col - 1] = column_sum  # Adjust for 0-based index
-            except ValueError:
-                pass
-        # return subtotal_row
-        # Add "GRAND TOTAL" in column A
+    # Calculate and add the sum of columns F and AB in column B
+    column_F_values = [str_to_float(row[5]) for row in values]
+    column_Z_values = [str_to_float(row[25]) for row in values]
 
-        # Calculate and add the sum of columns F and AB in column B
-        column_F_values = [str_to_float(row[5]) for row in values]
-        column_Z_values = [str_to_float(row[25]) for row in values]
+    column_AA_values = [str_to_float(row[26]) for row in values]
+    column_AB_values = [str_to_float(row[27]) for row in values]
+    column_AC_values = [str_to_float(row[28]) for row in values]
 
-        column_AA_values = [str_to_float(row[26]) for row in values]
-        column_AB_values = [str_to_float(row[27]) for row in values]
-        column_AC_values = [str_to_float(row[28]) for row in values]
+    subtotal = sum(column_F_values) + sum(column_Z_values)
 
-        subtotal = sum(column_F_values) + sum(column_Z_values)
+    subtotal_row[0] = "SUBTOTAL"
+    subtotal_row[1] = subtotal
 
-        subtotal_row[0] = "SUBTOTAL"
-        subtotal_row[1] = subtotal
+    discounts_row[0] = "OTHERS"
+    discounts = sum(column_AA_values) + sum(column_AB_values) + sum(column_AC_values)
+    discounts_row[1] = discounts
 
-        discounts_row[0] = "OTHERS"
-        discounts = (
-            sum(column_AA_values) + sum(column_AB_values) + sum(column_AC_values)
-        )
-        discounts_row[1] = discounts
+    gensen_row[0] = "源泉徴収税"
+    gensen = calc_gensen(subtotal, days_in_mon)
+    gensen_row[1] = gensen
 
-        gensen_row[0] = "源泉徴収税"
-        gensen = calc_gensen(subtotal, days_in_mon)
-        gensen_row[1] = gensen
+    paid_amount_row[0] = "支払金額合計"
+    paid_amount_row[1] = subtotal + gensen
 
-        paid_amount_row[0] = "支払金額合計"
-        paid_amount_row[1] = subtotal + gensen
+    grand_total_row[0] = "GRAND TOTAL"
+    grand_total_row[1] = subtotal + discounts + gensen
 
-        grand_total_row[0] = "GRAND TOTAL"
-        grand_total_row[1] = subtotal + discounts + gensen
+    # Append the totals row to the worksheet
+    values.append(subtotal_row)
+    values.append(gensen_row)
+    values.append(paid_amount_row)
+    values.append(discounts_row)
+    values.append(grand_total_row)
 
-        # Append the totals row to the worksheet
-        values.append(subtotal_row)
-        values.append(gensen_row)
-        values.append(paid_amount_row)
-        values.append(discounts_row)
-        values.append(grand_total_row)
-
-        # Update the worksheet with the modified values
-        worksheet.update(values, value_input_option="USER_ENTERED")
-
-        return True
-    except Exception as e:
-        print(
-            f"An error occurred in calc_totals_nrws for file {worksheet.spreadsheet.title} {str(e)}",
-            type(e),
-        )
-        raise e
-        return False
+    try_number = 0
+    # Update the worksheet with the modified values
+    while True:
+        try:
+            worksheet.update(values, value_input_option="USER_ENTERED")
+            return True
+        except Exception as e:
+            hanler = handle_gspread_error(e, "calc_totals_nrws part_2", "nenen")
+            if hanler == True and try_number == 0:
+                try_number = try_number + 1
+                continue
+            else:
+                print(
+                    f"An error occurred in calc_totals_nrws for file {worksheet.spreadsheet.title} {str(e)}",
+                    type(e),
+                )
+                raise e
+    return False
 
 
 def get_spreadsheet(spreadsheet_name=None, spreadsheet_id=None):
