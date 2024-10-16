@@ -58,24 +58,31 @@ def save_error_to_bucket(message, file_name, bucket_name):
 
 def get_hostess_dict(master_id):
     try:
+        gc = gspread.service_account()
+    except:
+        credentials, _ = google.auth.default()
+        gc = gspread.authorize(credentials)
+    try_number = 0
+    while True:
         try:
-            gc = gspread.service_account()
-        except:
-            credentials, _ = google.auth.default()
-            gc = gspread.authorize(credentials)
+            nyc_master_hostess_data = gc.open_by_key(master_id)
+            worksheet_name = "MASTER"  #### Maybe this should be an environment variable
+            worksheet = nyc_master_hostess_data.worksheet(worksheet_name)
 
-        nyc_master_hostess_data = gc.open_by_key(master_id)
-        worksheet_name = "MASTER"  #### Maybe this should be an environment variable
-        worksheet = nyc_master_hostess_data.worksheet(worksheet_name)
+            a_col = worksheet.get_values("A2:A")
+            p_col = worksheet.get_values("P2:P")
 
-        a_col = worksheet.get_values("A2:A")
-        p_col = worksheet.get_values("P2:P")
-
-        hostes_dict = {A[0]: P[0] for A, P in zip(a_col, p_col)}
-    except Exception as e:
-        print("Error in get_hostess_dict", e, type(e))
-        return {}
-    return hostes_dict
+            hss_dict = {A[0]: P[0] for A, P in zip(a_col, p_col)}
+            break
+        except Exception as e:
+            handler = handle_gspread_error(e, "get_hostess_dict", "nonoe")
+            if handler == True and try_number == 0:
+                try_number = try_number + 1
+                continue
+            else:
+                print("Error in get_hostess_dict", e, type(e))
+                return {}
+    return hss_dict
 
 
 def clear_formatting(FILE, sheet_name):
@@ -97,7 +104,7 @@ def clear_formatting(FILE, sheet_name):
             }
             break
         except Exception as e:
-            handler = handle_gspread_error(e,"clear_formatting part_1","nonoe")
+            handler = handle_gspread_error(e, "clear_formatting part_1", "nonoe")
             if handler == True and try_number == 0:
                 try_number = try_number + 1
                 continue
@@ -109,7 +116,7 @@ def clear_formatting(FILE, sheet_name):
             FILE.batch_update(body)
             break
         except Exception as e:
-            handler = handle_gspread_error(e,"clear_formatting part_2","nonoe")
+            handler = handle_gspread_error(e, "clear_formatting part_2", "nonoe")
             if handler == True and try_number == 0:
                 try_number = try_number + 1
                 continue
