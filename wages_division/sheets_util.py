@@ -18,7 +18,7 @@ def handle_gspread_error(error, function_name, bucket_name):
     error_message = str(error).lower()
     # Search for "Please try again in XX seconds" pattern
     retry_match = re.search(r"please try again in (\d+) seconds", error_message)
-    print(retry_match)
+    # print(retry_match)
     if retry_match:
         print(f"API error in {function_name}")
         # Extract the number of seconds to sleep
