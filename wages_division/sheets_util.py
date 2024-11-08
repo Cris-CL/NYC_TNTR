@@ -2,53 +2,131 @@ import gspread
 import google.auth
 from time import sleep
 import calendar
+import re
+from datetime import datetime
+from google.cloud import storage
+
+
+def handle_gspread_error(error, function_name, bucket_name):
+    """
+    Handles gspread html errors that occur during processing.
+
+    Args:
+        error (Exception): The exception that occurred.
+        function_name (str): The name of the function where the error happened.
+    """
+    error_message = str(error).lower()
+    # Search for "Please try again in XX seconds" pattern
+    retry_match = re.search(r"please try again in (\d+) seconds", error_message)
+    print(retry_match)
+    if retry_match:
+        print(f"API error in {function_name}")
+        # Extract the number of seconds to sleep
+        sleep_time = int(retry_match.group(1)) + 1
+        print(f"Sleeping for {sleep_time} seconds.")
+        sleep(sleep_time)
+
+        # Save the error message to a text file in the bucket
+        current_date = datetime.now().strftime("%y%m%d")
+        file_name = f"{current_date}_apierror_message.txt"
+        # save_error_to_bucket(error_message, file_name, bucket_name)
+        print(f"Retrying {function_name}")
+        return True
+    else:
+        return False
+
+
+def save_error_to_bucket(message, file_name, bucket_name):
+    """
+    Creates a file with the contents of special errors and places it on
+    a bucket to not print huge statements in the logs.
+
+    Args:
+        message (str): The contents of the error message.
+        file_name (str): The name of the file to be created.
+        bucket_name (str): The name of the bucket where the file will be placed.
+    """
+    # Initialize the Cloud Storage client
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+
+    # Create a new blob and upload the message
+    blob = bucket.blob(file_name)
+    blob.upload_from_string(message)
+    return
 
 
 def get_hostess_dict(master_id):
     try:
+        gc = gspread.service_account()
+    except:
+        credentials, _ = google.auth.default()
+        gc = gspread.authorize(credentials)
+    try_number = 0
+    while True:
         try:
-            gc = gspread.service_account()
-        except:
-            credentials, _ = google.auth.default()
-            gc = gspread.authorize(credentials)
+            nyc_master_hostess_data = gc.open_by_key(master_id)
+            worksheet_name = "MASTER"  #### Maybe this should be an environment variable
+            worksheet = nyc_master_hostess_data.worksheet(worksheet_name)
 
-        nyc_master_hostess_data = gc.open_by_key(master_id)
-        worksheet_name = "MASTER"  #### Maybe this should be an environment variable
-        worksheet = nyc_master_hostess_data.worksheet(worksheet_name)
+            a_col = worksheet.get_values("A2:A")
+            p_col = worksheet.get_values("P2:P")
 
-        a_col = worksheet.get_values("A2:A")
-        p_col = worksheet.get_values("P2:P")
-
-        hostes_dict = {A[0]: P[0] for A, P in zip(a_col, p_col)}
-    except Exception as e:
-        print("Error in get_hostess_dict",e, type(e))
-        return {}
-    return hostes_dict
+            hss_dict = {A[0]: P[0] for A, P in zip(a_col, p_col)}
+            break
+        except Exception as e:
+            handler = handle_gspread_error(e, "get_hostess_dict", "nonoe")
+            if handler == True and try_number == 0:
+                try_number = try_number + 1
+                continue
+            else:
+                print("Error in get_hostess_dict", e, type(e))
+                return {}
+    return hss_dict
 
 
 def clear_formatting(FILE, sheet_name):
-    wsht = FILE.worksheet(sheet_name)
-    sheetId = int(wsht._properties["sheetId"])
-    body = {
-        "requests": [
-            {
-                "repeatCell": {
-                    "range": {"sheetId": sheetId},
-                    "cell": {"userEnteredFormat": {}},
-                    "fields": "userEnteredFormat",
-                }
+    try_number = 0
+    while True:
+        try:
+            wsht = FILE.worksheet(sheet_name)
+            sheetId = int(wsht._properties["sheetId"])
+            body = {
+                "requests": [
+                    {
+                        "repeatCell": {
+                            "range": {"sheetId": sheetId},
+                            "cell": {"userEnteredFormat": {}},
+                            "fields": "userEnteredFormat",
+                        }
+                    }
+                ]
             }
-        ]
-    }
-    try:
-        FILE.batch_update(body)
-    except Exception as e:
-        print(
-            f"Error in clear_formatting on file: {FILE.title} and sheet: {sheet_name}",
-            e,
-            type(e),
-        )
-        return
+            break
+        except Exception as e:
+            handler = handle_gspread_error(e, "clear_formatting part_1", "nonoe")
+            if handler == True and try_number == 0:
+                try_number = try_number + 1
+                continue
+            else:
+                raise e
+    try_number = 0
+    while True:
+        try:
+            FILE.batch_update(body)
+            break
+        except Exception as e:
+            handler = handle_gspread_error(e, "clear_formatting part_2", "nonoe")
+            if handler == True and try_number == 0:
+                try_number = try_number + 1
+                continue
+            else:
+                print(
+                    f"Error in clear_formatting on file: {FILE.title} and sheet: {sheet_name}",
+                    e,
+                    type(e),
+                )
+    return
 
 
 def format_worksheet(worksheet):
@@ -132,12 +210,17 @@ def format_worksheet(worksheet):
         },
     ]
     batch = batch + batch_2
+    try_number = 0
     while True:
         try:
             worksheet.batch_format(batch)
             break
         except Exception as e:
-            if "exhausted" in str(e).lower() or "exeeded" in str(e).lower():
+            handler = handle_gspread_error(e, "format_worksheet", "none")
+            if handler == True and try_number == 0:
+                try_number = try_number + 1
+                continue
+            elif "exhausted" in str(e).lower() or "exeeded" in str(e).lower():
                 print(
                     f"Waiting for {format_waiting} seconds before retrying format_worksheet"
                 )
@@ -150,7 +233,16 @@ def format_worksheet(worksheet):
 
 
 def resize_columns(FILE, sheet_name):
-    wsht = FILE.worksheet(sheet_name)
+    try_number = 0
+    while True:
+        try:
+            wsht = FILE.worksheet(sheet_name)
+            break
+        except Exception as e:
+            handler = handle_gspread_error(e, "resize_columns part_1", "none")
+            if handler == True and try_number == 0:
+                try_number = try_number + 1
+                continue
     sheetId = int(wsht._properties["sheetId"])
     body = {
         "requests": [
@@ -166,19 +258,29 @@ def resize_columns(FILE, sheet_name):
             }
         ]
     }
+    try_number = 0
     while True:
         try:
             FILE.batch_update(body)
             return
         except Exception as e:
-            if "exhausted" in str(e).lower() or "exceeded" in str(e).lower():
+            handler = handle_gspread_error(e, "resize_columns part_2", "none")
+            if handler == True and try_number == 0:
+                try_number = try_number + 1
+                continue
+            elif "exhausted" in str(e).lower() or "exceeded" in str(e).lower():
                 print(
                     f"API rate limit exceeded. Waiting 5 and retrying formatting {sheet_name} sheet"
                 )
                 sleep(5)
+                continue
             else:
                 file_name = int(wsht._properties)
-                print(f"resize_columns: Couldnt resize the sheet {sheet_name} on {file_name}",e, type(e))
+                print(
+                    f"resize_columns: Couldnt resize the sheet {sheet_name} on {file_name}",
+                    e,
+                    type(e),
+                )
                 return
 
 
@@ -206,8 +308,20 @@ def days_in_month(date_string):
 
 
 def calc_gensen(subtotal, days_in_month):
-    gensen = - (subtotal - 5000 * days_in_month) * 0.1021
-    if abs(gensen) > 0:
-        return round(gensen)
+    """
+    Calculates the 源泉徴収税 (gensen) for the current hostess, the formula is the subtotal minus 5,000 yen times the
+    amount of days in the current month, if that value is more than 0 then multiply it by 0.1021, round it and make
+    it negative, in case the value is less than 0 then returns 0.
+
+    Args:
+        subtotal (int): The wage plus commission earned in the month.
+        days_in_month (int): The amount of days the current month has.
+
+    Returns:
+        int: The negative and  rounded gensen.
+    """
+    gensen = (subtotal - 5000 * days_in_month) * 0.1021
+    if gensen > 0:
+        return round(-gensen)
     else:
         return 0
