@@ -18,7 +18,7 @@ def handle_gspread_error(error, function_name, bucket_name):
     error_message = str(error).lower()
     # Search for "Please try again in XX seconds" pattern
     retry_match = re.search(r"please try again in (\d+) seconds", error_message)
-    # print(retry_match)
+    print(retry_match)
     if retry_match:
         print(f"API error in {function_name}")
         # Extract the number of seconds to sleep
@@ -308,8 +308,20 @@ def days_in_month(date_string):
 
 
 def calc_gensen(subtotal, days_in_month):
-    gensen = -(subtotal - 5000 * days_in_month) * 0.1021
-    if abs(gensen) > 0:
-        return round(gensen)
+    """
+    Calculates the 源泉徴収税 (gensen) for the current hostess, the formula is the subtotal minus 5,000 yen times the
+    amount of days in the current month, if that value is more than 0 then multiply it by 0.1021, round it and make
+    it negative, in case the value is less than 0 then returns 0.
+
+    Args:
+        subtotal (int): The wage plus commission earned in the month.
+        days_in_month (int): The amount of days the current month has.
+
+    Returns:
+        int: The negative and  rounded gensen.
+    """
+    gensen = (subtotal - 5000 * days_in_month) * 0.1021
+    if gensen > 0:
+        return round(-gensen)
     else:
         return 0
