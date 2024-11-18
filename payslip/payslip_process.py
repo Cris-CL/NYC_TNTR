@@ -34,8 +34,21 @@ def get_bill_file(bill_file_id, credentials=None):
 
 
 def calc_gensen(subtotal, days_in_month):
-    if (subtotal - 5000 * days_in_month) * 0.1021 > 0:
-        return round(-(subtotal - 5000 * days_in_month) * 0.1021)
+    """
+    Calculates the 源泉徴収税 (gensen) for the current hostess, the formula is the subtotal minus 5,000 yen times the
+    amount of days in the current month, if that value is more than 0 then multiply it by 0.1021, round it and make
+    it negative, in case the value is less than 0 then returns 0.
+
+    Args:
+        subtotal (int): The wage plus commission earned in the month.
+        days_in_month (int): The amount of days the current month has.
+
+    Returns:
+        int: The negative and  rounded gensen.
+    """
+    gensen = (subtotal - 5000 * days_in_month) * 0.1021
+    if gensen > 0:
+        return round(-gensen)
     else:
         return 0
 
