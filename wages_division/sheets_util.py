@@ -168,8 +168,12 @@ def format_worksheet(worksheet):
         "AB": "currency",
         "AC": "currency",
         "AD": "number",
+        "AE": "currency",
     }
     num_rows = len(worksheet.get_all_values())
+    if int(worksheet.col_count) < 31:
+        col_types.pop("AE")
+
     format_options = {
         col: cell_types.get(col_types.get(col, "number"), cell_types["number"])
         for col in col_types.keys()
@@ -244,6 +248,10 @@ def resize_columns(FILE, sheet_name):
                 try_number = try_number + 1
                 continue
     sheetId = int(wsht._properties["sheetId"])
+    try:
+        END_INDEX = wsht.col_count
+    except:
+        END_INDEX = 30
     body = {
         "requests": [
             {
@@ -252,7 +260,7 @@ def resize_columns(FILE, sheet_name):
                         "sheetId": sheetId,
                         "dimension": "COLUMNS",
                         "startIndex": 1,
-                        "endIndex": 30,
+                        "endIndex": END_INDEX,
                     }
                 }
             }
@@ -325,3 +333,10 @@ def calc_gensen(subtotal, days_in_month):
         return round(-gensen)
     else:
         return 0
+
+
+def col_to_number(col_df):
+    new_col = col_df.copy().map(
+        lambda x: float(x) if isinstance(x, str) and x[-1].isnumeric() else 0
+    )
+    return new_col
