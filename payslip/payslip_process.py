@@ -107,7 +107,10 @@ def copy_template(FILE, new_name, template_name):
     list_sheets = [sheets.title for sheets in FILE.worksheets()]
 
     if new_name in list_sheets:
-        return template.worksheet(new_name)
+        existing = FILE.worksheet(new_name)
+        FILE.del_worksheet(existing)
+        print(f"Deleted {new_name} from {FILE.title}")
+        # return template.worksheet(new_name)
 
     # return example_sheet
     if example_sheet:
@@ -313,7 +316,7 @@ def get_all_bills(bill_master_df, cred, month_string, bill_id):
                 total_errors = total_errors + 1
                 waiting_time = waiting_time + 5
                 if total_errors > 3:
-                    print("Couldn't not process bill for: ", name)
+                    print("Couldn't process bill for: ", name)
                     break
                 continue
     return

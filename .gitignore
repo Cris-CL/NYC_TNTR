@@ -11,3 +11,6 @@ functions/test.py
 *.ipynb
 *.csv
 queries/
+*.sh
+*.log
+**/requirements.txt

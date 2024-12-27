@@ -263,10 +263,18 @@ def process_hostess(name, results_df, sh_hostess_dict, year, month):
             if not validate_spreadsheet_name(sh, name):
                 return False
 
-            df_temp = get_specific_hostess_df(results_df, name)
+            df_orig_temp = get_specific_hostess_df(results_df, name)
+            df_temp = df_orig_temp.copy()
             if df_temp.empty:
                 print(f"No data for {name}")
                 return False
+            try:
+                df_temp["net_day"] = col_to_number(df_temp["SUBTOTAL_WAGE"]) + col_to_number(df_temp["TOTAL_DAY"]) + col_to_number(df_temp["送り"]) + col_to_number(df_temp["DISC"]) + col_to_number(df_temp["ADV"])
+            except Exception as e:
+                print(f"Error in col_to_number for {name}",e)
+                df_temp = pd.DataFrame()
+                print("Using original dataframe without net_day column")
+                df_temp = df_orig_temp
 
             active_worksheet = prepare_worksheet(sh, df_temp, year, month)
 
