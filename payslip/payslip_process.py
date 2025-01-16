@@ -225,7 +225,7 @@ def get_wage_comission(dataframe):
             rows.append(
                 [
                     date.strftime("%Y-%m-%d"),
-                    "Show",
+                    "Wage",
                     wage_total_daily,
                     wage_total_daily,
                     "",
