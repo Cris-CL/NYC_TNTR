@@ -1,9 +1,6 @@
-# functions-framework==3.4.0
-# flask==2.2.3
-# Werkzeug==2.3.7
+# functions-framework==3.*
+# flask==2.2.2
 # pytz
-# requests
-
 from datetime import datetime
 from flask import Flask, request, jsonify
 import pytz
@@ -30,8 +27,10 @@ def webhook(request):
     print(posted_data)
 
     ### If the message receibed is of a sync, return a success status and finish
+    type_message = posted_data[4][1]
 
-    if posted_data[4][1]=="sync":
+    if type_message in ["sync","trash"]:
+      print(posted_data[4])
       http_status=jsonify({'status':'success'}),200
       return http_status
 
