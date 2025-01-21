@@ -3,6 +3,7 @@ import google.auth
 from time import sleep
 import calendar
 import re
+import os
 from datetime import datetime
 from google.cloud import storage
 
@@ -29,7 +30,7 @@ def handle_gspread_error(error, function_name, bucket_name):
         # Save the error message to a text file in the bucket
         current_date = datetime.now().strftime("%y%m%d")
         file_name = f"{current_date}_apierror_message.txt"
-        # save_error_to_bucket(error_message, file_name, bucket_name)
+        save_error_to_bucket(error_message, file_name, bucket_name)
         print(f"Retrying {function_name}")
         return True
     else:
@@ -47,8 +48,9 @@ def save_error_to_bucket(message, file_name, bucket_name):
         bucket_name (str): The name of the bucket where the file will be placed.
     """
     # Initialize the Cloud Storage client
+    ERROR_BUCKET = os.environ["ERROR_BUCKET"]
     storage_client = storage.Client()
-    bucket = storage_client.get_bucket(bucket_name)
+    bucket = storage_client.get_bucket(ERROR_BUCKET)
 
     # Create a new blob and upload the message
     blob = bucket.blob(file_name)
@@ -338,5 +340,6 @@ def calc_gensen(subtotal, days_in_month):
 def col_to_number(col_df):
     new_col = col_df.copy().map(
         lambda x: float(x) if isinstance(x, str) and x[-1].isnumeric() else 0
+        # print(type(x),x.isnumeric())
     )
     return new_col
