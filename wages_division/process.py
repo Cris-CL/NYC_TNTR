@@ -5,7 +5,6 @@
 import os
 import pandas as pd
 import google.auth
-from google.cloud import bigquery
 from new_process import *
 from time import sleep
 from new_query import create_new_query
@@ -13,6 +12,7 @@ from sheets_util import *
 import datetime
 import json
 import requests
+from google.cloud import bigquery
 from google.cloud import storage
 
 
@@ -71,7 +71,11 @@ def get_dataframe(month=9, year=2023):
     # Create a BigQuery client with the obtained credentials
     bq_client = bigquery.Client(credentials=credentials)
 
-    query_job = bq_client.query(query)
+    try:
+        query_job = bq_client.query(query)
+    except Exception as e:
+        print("Error in get_dataframe query_job part")
+        raise e
     results_df = query_job.to_dataframe()
 
     # Convert time columns to string
@@ -106,7 +110,14 @@ def process_sheets_from_master(month, year_process, host_names="All", attempts=1
             print("Couldn't process individual names")
             print(e, type(e))
 
-    results_df = get_dataframe(month=month, year=year_process)
+    try:
+        results_df = get_dataframe(month=month, year=year_process)
+    except Exception as e:
+        print(e)
+        write_failed_sheets_to_json(
+            "All", year_process, month, attempt=attempts
+        )
+        return []
     try:
         names_in_df = results_df["hostess_name"].unique().tolist()
         hostess_dict = {
