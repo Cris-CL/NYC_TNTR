@@ -8,7 +8,7 @@ import google.auth
 from new_process import *
 from time import sleep
 from new_query import create_new_query
-from sheets_util import *
+from get_spread_info import get_hostess_dict
 import datetime
 import json
 import requests
