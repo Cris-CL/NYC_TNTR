@@ -14,3 +14,4 @@ queries/
 *.sh
 *.log
 **/requirements.txt
+*.vscode
