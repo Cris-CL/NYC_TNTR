@@ -42,7 +42,7 @@ def write_failed_sheets_to_json(names, year, month, attempt=0):
         print("Sending request to test function url")
         requests.post(TEST_FUNCTION, json=failed_sheets, headers=headers)
     except Exception as e:
-        print(e)
+        print(f"Error in write_failed_sheets_to_json {e} ---- {type(e)}.")
     save_json_to_bucket(bucket_name, file_name, failed_sheets)
     return
 
@@ -108,12 +108,12 @@ def process_sheets_from_master(month, year_process, host_names="All", attempts=1
             }
         except Exception as e:
             print("Couldn't process individual names")
-            print(e, type(e))
+            print(f"Error in process_sheets_from_master {e} ---- {type(e)}.")
 
     try:
         results_df = get_dataframe(month=month, year=year_process)
     except Exception as e:
-        print(e)
+        print('Error in process_sheets_from_master writting failed to bucket, message: {e} and type: {type(e)}')
         write_failed_sheets_to_json(
             "All", year_process, month, attempt=attempts
         )
