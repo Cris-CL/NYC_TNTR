@@ -42,7 +42,7 @@ def process_sheet(request):
                 print("No retries left, finishing process")
 
         except Exception as e:
-            print(e)
+            print("Error in process_sheet:",e)
             http_status = "", 400
         http_status = jsonify({"status": "success"}), 200
     else:
