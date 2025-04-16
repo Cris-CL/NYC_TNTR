@@ -130,8 +130,7 @@ def calc_totals_nrws(worksheet, year, month):
                 continue
             else:
                 print(
-                    f"An error occurred in calc_totals_nrws for file {worksheet.spreadsheet.title} {str(e)}",
-                    type(e),
+                    f"An error occurred in calc_totals_nrws for file {worksheet.spreadsheet.title} type: {type(e)}",
                 )
                 raise e
     return False
@@ -271,7 +270,7 @@ def process_hostess(name, results_df, sh_hostess_dict, year, month):
             try:
                 df_temp["net_day"] = col_to_number(df_temp["SUBTOTAL_WAGE"]) + col_to_number(df_temp["TOTAL_DAY"]) + col_to_number(df_temp["送り"]) + col_to_number(df_temp["DISC"]) + col_to_number(df_temp["ADV"])
             except Exception as e:
-                print(f"Error in col_to_number for {name}",e)
+                print(f"Error in col_to_number for {name} message: {e}, type: {type(e)}")
                 df_temp = pd.DataFrame()
                 print("Using original dataframe without net_day column")
                 df_temp = df_orig_temp
@@ -285,17 +284,13 @@ def process_hostess(name, results_df, sh_hostess_dict, year, month):
                 format_worksheet(active_worksheet)
             except Exception as e:
                 print(
-                    f"Error in process_hostess format_worksheet step for {name} Sheet",
-                    e,
-                    type(e),
+                    f"Error in process_hostess format_worksheet step for {name} Sheet message: {e}, type: {type(e)}"
                 )
             try:
                 resize_columns(FILE=sh, sheet_name=active_worksheet.title)
             except Exception as e:
                 print(
-                    f"Error in process_hostess rezise_columns step for {name} Sheet",
-                    e,
-                    type(e),
+                    f"Error in process_hostess rezise_columns step for {name} Sheet message: {e}, type: {type(e)}"
                 )
             sleep(6)
             return True
@@ -432,14 +427,11 @@ def handle_other_errors(name, error):
     err_txt = str(error).lower()
     if 'http' in err_txt:
         print(
-            f"Other error handler -- got http error while processing {name}",
-            type(error),
+            f"Other error handler -- got http error while processing {name} type {type(error)}"
             )
     else:
         print(
-            f"Other error handler -- An error occurred while processing {name}",
-            error,
-            type(error),
+            f"Other error handler -- An error occurred while processing {name} message: {error} type: {type(error)}"
         )
 
 
