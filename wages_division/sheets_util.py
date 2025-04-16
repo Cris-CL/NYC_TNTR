@@ -19,7 +19,7 @@ def handle_gspread_error(error, function_name, bucket_name):
     error_message = str(error).lower()
     # Search for "Please try again in XX seconds" pattern
     retry_match = re.search(r"please try again in (\d+) seconds", error_message)
-    print(retry_match)
+    print(f"handle_gspread_error: match= {retry_match}")
     if retry_match:
         print(f"API error in {function_name}")
         # Extract the number of seconds to sleep
@@ -95,9 +95,7 @@ def clear_formatting(FILE, sheet_name):
                 continue
             else:
                 print(
-                    f"Error in clear_formatting on file: {FILE.title} and sheet: {sheet_name}",
-                    e,
-                    type(e),
+                    f"Error in clear_formatting on file: {FILE.title} and sheet: {sheet_name} message: {e} and type: {type(e)}"
                 )
     return
 
@@ -204,7 +202,7 @@ def format_worksheet(worksheet):
                 sleep(format_waiting)
                 format_waiting = format_waiting + 1
             else:
-                print(f"Error in format_worksheet for {worksheet.title}", e, type(e))
+                print(f"Error in format_worksheet for {worksheet.title} message: {e} and type: {type(e)}")
                 raise e
     return
 
@@ -258,9 +256,7 @@ def resize_columns(FILE, sheet_name):
             else:
                 file_name = int(wsht._properties)
                 print(
-                    f"resize_columns: Couldnt resize the sheet {sheet_name} on {file_name}",
-                    e,
-                    type(e),
+                    f"resize_columns: Couldnt resize the sheet {sheet_name} on {file_name} message: {e} and type: {type(e)}"
                 )
                 return
 
