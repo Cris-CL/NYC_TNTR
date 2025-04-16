@@ -28,6 +28,6 @@ def get_hostess_dict(master_id):
                 try_number = try_number + 1
                 continue
             else:
-                print("Error in get_hostess_dict", e, type(e))
-                return {}
+                print("Error in get_hostess_dict", type(e))
+                hss_dict = {}
     return hss_dict

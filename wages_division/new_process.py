@@ -130,7 +130,7 @@ def calc_totals_nrws(worksheet, year, month):
                 continue
             else:
                 print(
-                    f"An error occurred in calc_totals_nrws for file {worksheet.spreadsheet.title} message: {str(e)} type: {type(e)}",
+                    f"An error occurred in calc_totals_nrws for file {worksheet.spreadsheet.title} type: {type(e)}",
                 )
                 raise e
     return False

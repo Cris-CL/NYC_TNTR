@@ -17,10 +17,12 @@ def handle_gspread_error(error, function_name, bucket_name):
         function_name (str): The name of the function where the error happened.
     """
     error_message = str(error).lower()
-    # Search for "Please try again in XX seconds" pattern
     retry_match = re.search(r"please try again in (\d+) seconds", error_message)
-    print(f"handle_gspread_error: match= {retry_match}")
+    current_date = datetime.now().strftime("%y%m%d")
+    file_name = f"{current_date}_{function_name}_handler.txt"
+
     if retry_match:
+        print(f"handle_gspread_error: match= {retry_match}")
         print(f"API error in {function_name}")
         # Extract the number of seconds to sleep
         sleep_time = int(retry_match.group(1)) + 1
@@ -28,13 +30,16 @@ def handle_gspread_error(error, function_name, bucket_name):
         sleep(sleep_time)
 
         # Save the error message to a text file in the bucket
-        current_date = datetime.now().strftime("%y%m%d")
-        file_name = f"{current_date}_apierror_message.txt"
-        save_error_to_bucket(error_message, file_name, bucket_name)
         print(f"Retrying {function_name}")
-        return True
+        function_return = True
     else:
-        return False
+        print(f"handle_gspread_error other error in {function_name}")
+        if len(error_message) < 300:
+            print(error_message)
+        function_return = False
+
+    save_error_to_bucket(error_message, file_name, bucket_name)
+    return function_return
 
 
 def save_error_to_bucket(message, file_name, bucket_name):
@@ -95,7 +100,7 @@ def clear_formatting(FILE, sheet_name):
                 continue
             else:
                 print(
-                    f"Error in clear_formatting on file: {FILE.title} and sheet: {sheet_name} message: {e} and type: {type(e)}"
+                    f"Error in clear_formatting on file: {FILE.title} and sheet: {sheet_name} type: {type(e)}"
                 )
     return
 
@@ -202,7 +207,7 @@ def format_worksheet(worksheet):
                 sleep(format_waiting)
                 format_waiting = format_waiting + 1
             else:
-                print(f"Error in format_worksheet for {worksheet.title} message: {e} and type: {type(e)}")
+                print(f"Error in format_worksheet for {worksheet.title} and type: {type(e)}")
                 raise e
     return
 
