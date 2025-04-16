@@ -12,8 +12,10 @@ PRODUCT_2 = os.environ["PRODUCT_2"]
 PRODUCT_3 = os.environ["PRODUCT_3"]
 
 
-def get_comission_list(month,year=2023):
-    month_str = (2-len(str(month)))*"0" + str(month) ## Add a zero if the month is less than 10
+def get_comission_list(month, year=2023):
+    month_str = (2 - len(str(month))) * "0" + str(
+        month
+    )  ## Add a zero if the month is less than 10
 
     client = bigquery.Client()
     query = f"""
@@ -32,12 +34,28 @@ def get_comission_list(month,year=2023):
     except Exception as e:
         print(e)
         print("Using default comission list")
-        com_lis = ['DR1','DR2','DR3','BT','FD','KA','OT','TB','TP','EN','EX','CR','DH','HC']
+        com_lis = [
+            "DR1",
+            "DR2",
+            "DR3",
+            "BT",
+            "FD",
+            "KA",
+            "OT",
+            "TB",
+            "TP",
+            "EN",
+            "EX",
+            "CR",
+            "DH",
+            "HC",
+        ]
     return com_lis
 
-def create_query(month,year=2023):
 
-    lis_comission = get_comission_list(month,year)
+def create_query(month, year=2023):
+
+    lis_comission = get_comission_list(month, year)
     full_query = f"""WITH part_one as (
     ----------------START PART ONE----------------
     WITH wages as (with assist as (SELECT DISTINCT

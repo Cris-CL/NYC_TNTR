@@ -1,12 +1,6 @@
-# pandas==1.5.1
-# google-cloud-bigquery>=3.3.5
-# gspread==5.7.2
-
 import os
-import pandas as pd
 import google.auth
-from new_process import *
-from time import sleep
+from updater_process import updater
 from new_query import create_new_query
 from get_spread_info import get_hostess_dict
 import datetime
@@ -16,7 +10,7 @@ from google.cloud import bigquery
 from google.cloud import storage
 
 
-def create_retry_message(attempt,year,month,names_list):
+def create_retry_message(attempt, year, month, names_list):
     message = {
         "type": "retry",
         "attempt": attempt,
@@ -82,7 +76,13 @@ def get_dataframe(month=9, year=2023):
 
     for col in results_df.columns:
         results_df[col] = results_df[col].astype(str)
-        results_df[col] = results_df[col].map(lambda x: None if isinstance(x,str) and x.lower() in ('nan', '<na>','0.0') else x)
+        results_df[col] = results_df[col].map(
+            lambda x: (
+                None
+                if isinstance(x, str) and x.lower() in ("nan", "<na>", "0.0")
+                else x
+            )
+        )
     return results_df
 
 
@@ -92,11 +92,7 @@ def process_sheets_from_master(month, year_process, host_names="All", attempts=1
     spread_2024 = os.environ["MASTER_SPREADSHEET_ID_24"]
     spread_2025 = os.environ["MASTER_SPREADSHEET_ID_25"]
 
-    master_selector = {
-        "2023": spread_2023,
-        "2024": spread_2024,
-        "2025": spread_2025
-    }
+    master_selector = {"2023": spread_2023, "2024": spread_2024, "2025": spread_2025}
     master_id = master_selector[str(year_process)]
 
     hostess_dict = get_hostess_dict(master_id)
@@ -113,10 +109,10 @@ def process_sheets_from_master(month, year_process, host_names="All", attempts=1
     try:
         results_df = get_dataframe(month=month, year=year_process)
     except Exception as e:
-        print('Error in process_sheets_from_master writting failed to bucket, message: {e} and type: {type(e)}')
-        write_failed_sheets_to_json(
-            "All", year_process, month, attempt=attempts
+        print(
+            "Error in process_sheets_from_master writting failed to bucket, message: {e} and type: {type(e)}"
         )
+        write_failed_sheets_to_json("All", year_process, month, attempt=attempts)
         return []
     try:
         names_in_df = results_df["hostess_name"].unique().tolist()
@@ -130,9 +126,13 @@ def process_sheets_from_master(month, year_process, host_names="All", attempts=1
     if len(results_df) < 1:
         print(f"No new data for the current month: {month} ")
         return []
-    names_not_updated = new_updater(results_df, hostess_dict, year_process, month)
+    names_not_updated = updater(results_df, hostess_dict, year_process, month)
 
-    if isinstance(names_not_updated, list) and len(names_not_updated) > 0 and attempts > 1:
+    if (
+        isinstance(names_not_updated, list)
+        and len(names_not_updated) > 0
+        and attempts > 1
+    ):
         print("Some updates failed, sending retry notice")
         write_failed_sheets_to_json(
             names_not_updated, year_process, month, attempt=attempts

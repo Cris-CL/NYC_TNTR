@@ -3,27 +3,35 @@ import pandas as pd
 import google.auth
 import gspread
 from time import sleep
-from sheets_util import *
+from sheets_util import (
+    days_in_month,
+    calc_gensen,
+    col_to_number,
+    format_worksheet,
+    resize_columns,
+    clean_cell,
+    clear_formatting,
+)
+from handlers import handle_other_errors, handle_rate_limit, handle_gspread_error
 import datetime
 
 
 def str_to_float(x):
     try:
-        x = x.replace("¥", "").replace(",", "")
-        return float(x)
+        x = float(x.replace("¥", "").replace(",", ""))
     except:
-
-        return 0
+        x = 0
+    return x
 
 
 def reverse_list_odd_date(lst):
     current_date = datetime.datetime.now().day
 
     if current_date % 2 == 0:
-        return lst
+        result_list = lst
     else:
-        reversed_list = list(reversed(lst))
-        return reversed_list
+        result_list = list(reversed(lst))
+    return result_list
 
 
 def calc_totals_nrws(worksheet, year, month):
@@ -43,7 +51,6 @@ def calc_totals_nrws(worksheet, year, month):
             else:
                 raise e
     # Add two empty rows at the bottom
-    num_rows = len(values)
     num_columns = len(values[0])
     for _ in range(2):
         values.append([""] * num_columns)
@@ -80,7 +87,6 @@ def calc_totals_nrws(worksheet, year, month):
             subtotal_row[col - 1] = column_sum  # Adjust for 0-based index
         except ValueError:
             pass
-    # return subtotal_row
     # Add "GRAND TOTAL" in column A
 
     # Calculate and add the sum of columns F and AB in column B
@@ -268,9 +274,17 @@ def process_hostess(name, results_df, sh_hostess_dict, year, month):
                 print(f"No data for {name}")
                 return False
             try:
-                df_temp["net_day"] = col_to_number(df_temp["SUBTOTAL_WAGE"]) + col_to_number(df_temp["TOTAL_DAY"]) + col_to_number(df_temp["送り"]) + col_to_number(df_temp["DISC"]) + col_to_number(df_temp["ADV"])
+                df_temp["net_day"] = (
+                    col_to_number(df_temp["SUBTOTAL_WAGE"])
+                    + col_to_number(df_temp["TOTAL_DAY"])
+                    + col_to_number(df_temp["送り"])
+                    + col_to_number(df_temp["DISC"])
+                    + col_to_number(df_temp["ADV"])
+                )
             except Exception as e:
-                print(f"Error in col_to_number for {name} message: {e}, type: {type(e)}")
+                print(
+                    f"Error in col_to_number for {name} message: {e}, type: {type(e)}"
+                )
                 df_temp = pd.DataFrame()
                 print("Using original dataframe without net_day column")
                 df_temp = df_orig_temp
@@ -398,44 +412,7 @@ def update_worksheet(active_worksheet, df_temp):
             raise e
 
 
-def handle_rate_limit(waiting_time, name):
-    """
-    Handles API rate limit errors by waiting and retrying.
-
-    Args:
-        waiting_time (int): The current waiting time in seconds.
-        name (str): The name of the hostess being processed.
-
-    Returns:
-        int: The updated waiting time for the next retry.
-    """
-    print(
-        f"API rate limit exceeded. Waiting {waiting_time} seconds and retrying {name} sheet"
-    )
-    sleep(waiting_time)
-    return waiting_time + 5
-
-
-def handle_other_errors(name, error):
-    """
-    Handles other errors that occur during processing.
-
-    Args:
-        name (str): The name of the hostess being processed.
-        error (Exception): The exception that occurred.
-    """
-    err_txt = str(error).lower()
-    if 'http' in err_txt:
-        print(
-            f"Other error handler -- got http error while processing {name} type {type(error)}"
-            )
-    else:
-        print(
-            f"Other error handler -- An error occurred while processing {name} message: {error} type: {type(error)}"
-        )
-
-
-def new_updater(results_df, sh_hostess_dict, year, month):
+def updater(results_df, sh_hostess_dict, year, month):
     """
     Updates all hostess spreadsheets with the given results data.
 
