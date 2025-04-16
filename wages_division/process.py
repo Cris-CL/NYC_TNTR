@@ -1,7 +1,7 @@
 import os
 import google.auth
 from updater_process import updater
-from new_query import create_new_query
+from query_generator import create_new_query
 from get_spread_info import get_hostess_dict
 import datetime
 import json
