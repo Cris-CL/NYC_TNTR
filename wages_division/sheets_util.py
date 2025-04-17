@@ -2,65 +2,7 @@ import gspread
 import google.auth
 from time import sleep
 import calendar
-import re
-import os
-from datetime import datetime
-from google.cloud import storage
-
-
-def handle_gspread_error(error, function_name, bucket_name):
-    """
-    Handles gspread html errors that occur during processing.
-
-    Args:
-        error (Exception): The exception that occurred.
-        function_name (str): The name of the function where the error happened.
-    """
-    error_message = str(error).lower()
-    retry_match = re.search(r"please try again in (\d+) seconds", error_message)
-    current_date = datetime.now().strftime("%y%m%d")
-    file_name = f"{current_date}_{function_name}_handler.txt"
-
-    if retry_match:
-        print(f"handle_gspread_error: match= {retry_match}")
-        print(f"API error in {function_name}")
-        # Extract the number of seconds to sleep
-        sleep_time = int(retry_match.group(1)) + 1
-        print(f"Sleeping for {sleep_time} seconds.")
-        sleep(sleep_time)
-
-        # Save the error message to a text file in the bucket
-        print(f"Retrying {function_name}")
-        function_return = True
-    else:
-        print(f"handle_gspread_error other error in {function_name}")
-        if len(error_message) < 300:
-            print(error_message)
-        function_return = False
-
-    save_error_to_bucket(error_message, file_name, bucket_name)
-    return function_return
-
-
-def save_error_to_bucket(message, file_name, bucket_name):
-    """
-    Creates a file with the contents of special errors and places it on
-    a bucket to not print huge statements in the logs.
-
-    Args:
-        message (str): The contents of the error message.
-        file_name (str): The name of the file to be created.
-        bucket_name (str): The name of the bucket where the file will be placed.
-    """
-    # Initialize the Cloud Storage client
-    ERROR_BUCKET = os.environ["ERROR_BUCKET"]
-    storage_client = storage.Client()
-    bucket = storage_client.get_bucket(ERROR_BUCKET)
-
-    # Create a new blob and upload the message
-    blob = bucket.blob(file_name)
-    blob.upload_from_string(message)
-    return
+from handlers import handle_gspread_error
 
 
 def clear_formatting(FILE, sheet_name):
@@ -207,7 +149,9 @@ def format_worksheet(worksheet):
                 sleep(format_waiting)
                 format_waiting = format_waiting + 1
             else:
-                print(f"Error in format_worksheet for {worksheet.title} and type: {type(e)}")
+                print(
+                    f"Error in format_worksheet for {worksheet.title} and type: {type(e)}"
+                )
                 raise e
     return
 

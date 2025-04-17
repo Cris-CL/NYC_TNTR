@@ -15,11 +15,13 @@ def create_new_query(month, year=2023):
     """
     This function returns the query that will be used later for filling the individual sheets for each hostess
     """
-    month_str = (2 - len(str(month))) * "0" + str(month)  ## Add a zero if the month is less than 10
-    query_2 = f"""
+    month_str = (2 - len(str(month))) * "0" + str(
+        month
+    )  ## Add a zero if the month is less than 10
+    query = f"""
     SELECT
         *
     FROM
         `{PROJECT_ID}.NYC_other.HostessSalary`('{year}', '{month_str}');
     """
-    return query_2
+    return query

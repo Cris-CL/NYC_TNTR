@@ -37,12 +37,12 @@ def process_sheet(request):
                 )
             if len(lis_names) > 0:
                 print(f"Retrying failed attempts for: {','.join(lis_names)}")
-                process_sheets_from_master(month, year, lis_names, attempts = 2)
+                process_sheets_from_master(month, year, lis_names, attempts=2)
             elif len(lis_names) == 0:
                 print("No retries left, finishing process")
 
         except Exception as e:
-            print("Error in process_sheet:",e)
+            print("Error in process_sheet:", e)
             http_status = "", 400
         http_status = jsonify({"status": "success"}), 200
     else:
