@@ -237,7 +237,8 @@ def prepare_hostess_list(sh_hostess_dict):
     try:
         list_hostess.remove("店")
     except ValueError:
-        print("店 not in the file")
+        # print("店 not in the file")
+        pass ### added instead of previous pring
 
     return list_hostess
 

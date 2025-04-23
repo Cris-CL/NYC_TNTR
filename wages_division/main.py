@@ -20,13 +20,13 @@ def process_sheet(request):
             hostess_name = posted_data["names"]
             type_request = posted_data["type"]
             attempt_number = posted_data["attempt"]
-            print(hostess_name)
+            # print(hostess_name)
             if type_request == "test":
                 print("Test")
                 return "<h1>Test run correctly</h1>"
             month = posted_data["month"]
             year = posted_data["year"]
-            print(month)
+            # print(month)
 
             if type_request == "regular":
                 lis_names = process_sheets_from_master(month, year, hostess_name)
