@@ -110,7 +110,7 @@ def process_sheets_from_master(month, year_process, host_names="All", attempts=1
         results_df = get_dataframe(month=month, year=year_process)
     except Exception as e:
         print(
-            "Error in process_sheets_from_master writting failed to bucket, message: {e} and type: {type(e)}"
+            f"Error in process_sheets_from_master writting failed to bucket, message: {e} and type: {type(e)}"
         )
         write_failed_sheets_to_json("All", year_process, month, attempt=attempts)
         return []
