@@ -11,6 +11,19 @@ from google.cloud import storage
 
 
 def create_retry_message(attempt, year, month, names_list):
+    """
+    Function that builds the retry message in case of failure.
+
+    Args:
+        attempt (int): Number of the current attempt.
+        year (int): Year of the current attempt.
+        month (int): Month of the current attempt.
+        names_list (list): List with the names of the failed
+
+    Returns:
+        message (dict): Formatted arguments for the retry message.
+    """
+
     message = {
         "type": "retry",
         "attempt": attempt,
@@ -22,6 +35,16 @@ def create_retry_message(attempt, year, month, names_list):
 
 
 def write_failed_sheets_to_json(names, year, month, attempt=0):
+    """
+    Function that creates a json file with the message with failed hostess sheets
+    for a later retry.
+
+    Args:
+        attempt (int): Number of the current attempt.
+        year (int): Year of the current attempt.
+        month (int): Month of the current attempt.
+        names_list (list): List with the names of the failed
+    """
 
     bucket_name = os.environ["BUCKET_RETRY"]
     today_date = datetime.date.today().strftime("%Y_%m_%d")
@@ -42,6 +65,15 @@ def write_failed_sheets_to_json(names, year, month, attempt=0):
 
 
 def save_json_to_bucket(bucket_name, file_name, data):
+    """
+    Function that saves a file to a bucket.
+
+    Args:
+        bucket_name (str): Name of the bucket where the data will be saved.
+        file_name (str): Name of the new file.
+        data (str): Content of the file.
+    """
+
     client = storage.Client()
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(file_name)
@@ -50,6 +82,17 @@ def save_json_to_bucket(bucket_name, file_name, data):
 
 
 def get_dataframe(month=9, year=2023):
+    """
+    Function that gets the full dataframe with all of the data from the specified
+    month and year.
+
+    Args:
+        year (int): Year of the current attempt.
+        month (int): Month of the current attempt.
+
+    Returns:
+        results_df (pd.Dataframe): Dataframe with the full data from the query result.
+    """
     QUERY_ASSIS = create_new_query(month, year)
     # Initialize Google Sheets and BigQuery clients
 
@@ -87,6 +130,21 @@ def get_dataframe(month=9, year=2023):
 
 
 def process_sheets_from_master(month, year_process, host_names="All", attempts=1):
+    """
+    Function that excecutes the process of updating all the hostess sheets.
+
+    Args:
+        month (int): Month to be updated.
+        year_process (int): Year to be updated.
+        host_names (int/): Hostess names to update, in case is a retry, this var
+        will be a list with the names.
+        attempts (int): Year of the current attempt.
+
+    Returns:
+        names_not_updated (list): List of names where some error happened and
+        couldnt update, in case of no errors the return is an emtpy list.
+    """
+
     print(f"Start processing for the year: {year_process} and the month: {month}")
     spread_2023 = os.environ["MASTER_SPREADSHEET_ID"]
     spread_2024 = os.environ["MASTER_SPREADSHEET_ID_24"]
