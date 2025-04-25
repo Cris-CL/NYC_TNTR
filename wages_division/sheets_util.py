@@ -6,6 +6,13 @@ from handlers import handle_gspread_error
 
 
 def clear_formatting(FILE, sheet_name):
+    """
+    This function clears the format for the worksheet FILE in the sheet_name.
+
+    Args:
+        FILE (gspread.file): Gspread Worksheet.
+        sheet_name (gspreadheet.sheet): Gspread Sheet.
+    """
     try_number = 0
     while True:
         try:
@@ -48,6 +55,13 @@ def clear_formatting(FILE, sheet_name):
 
 
 def format_worksheet(worksheet):
+    """
+    This function gives the final formatting for the worksheet so all the columns
+    get the proper format.
+
+    Args:
+        worksheet (int): worksheet to be formatted.
+    """
     format_waiting = 5
 
     cell_types = {
@@ -157,6 +171,13 @@ def format_worksheet(worksheet):
 
 
 def resize_columns(FILE, sheet_name):
+    """
+    This function resize the columns for the FILE and sheet_name.
+
+    Args:
+        FILE (gspread.file): Gspread Worksheet.
+        sheet_name (gspreadheet.sheet): Gspread Sheet.
+    """
     try_number = 0
     while True:
         try:
@@ -211,6 +232,16 @@ def resize_columns(FILE, sheet_name):
 
 
 def clean_cell(unit_cell):
+    """
+    This function cleans the numeric cells and replaces the common nan/null values
+    for emtpy strings where is the case.
+
+    Args:
+        unit_cell (str): single cell raw.
+    Returns:
+        unit_cell (float): single cell cleaned.
+    """
+
     if unit_cell.value.lower() in ["nan", "none", "nat", "null", "<na>", " "]:
         unit_cell.value = ""
     else:
@@ -223,6 +254,15 @@ def clean_cell(unit_cell):
 
 
 def days_in_month(date_string):
+    """
+    This function calculates the amount of days in a specific month to be used
+    to calculate the gensen.
+
+    Args:
+        date_string (str): Date in yyyymmdd format.
+    Returns:
+        num_days (int): Number of days on the specific month.
+    """
     try:
         year = int(date_string[0:4])
         month = int(date_string[4:6])
@@ -244,7 +284,7 @@ def calc_gensen(subtotal, days_in_month):
         days_in_month (int): The amount of days the current month has.
 
     Returns:
-        int: The negative and  rounded gensen.
+        int: The negative and rounded gensen.
     """
     gensen = (subtotal - 5000 * days_in_month) * 0.1021
     if gensen > 0:
@@ -254,8 +294,15 @@ def calc_gensen(subtotal, days_in_month):
 
 
 def col_to_number(col_df):
+    """
+    This function transforms and cleans a numeric column from a pandas dataframe.
+
+    Args:
+        col_df (df.column): Dataframe column.
+    Returns:
+        new_col (df.column): cleaned column.
+    """
     new_col = col_df.copy().map(
         lambda x: float(x) if isinstance(x, str) and x[-1].isnumeric() else 0
-        # print(type(x),x.isnumeric())
     )
     return new_col
