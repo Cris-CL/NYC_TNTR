@@ -5,6 +5,16 @@ from sheets_util import handle_gspread_error
 
 
 def get_hostess_dict(master_id):
+    """
+    Reads the master NYC_202X00_MHS file and creates a dictionary with the info
+    from the names and google sheet id for each hostess.
+
+    Args:
+        master_id (str): Id from the Master sheet.
+
+    Returns:
+        dict: The dictionary with the shape "Hosstess_name" : "sheet_id".
+    """
     try:
         gc = gspread.service_account()
     except:
