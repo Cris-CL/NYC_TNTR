@@ -8,6 +8,18 @@ app = Flask(__name__)
 
 @app.route("/process_sheet", methods=["POST", "GET"])
 def process_sheet(request):
+    """
+    Function that receives the daily update message, and triggers the whole process,
+    the type of messages are normal update (for the current and previous months)
+    for all of the hostess, and a retry update with the failed updates from the
+    previous excecution.
+
+    Args:
+        request (str): Sub/Pub Message with the info for updating the hostess salary.
+
+    Returns:
+        http_status: Corresponding status code (200 for success and 400 for failure).
+    """
 
     if request.method == "GET":
         return "<h1> This is a webhook listener!</h1>"

@@ -17,6 +17,16 @@ import datetime
 
 
 def str_to_float(x):
+    """
+    Function that cleans a value from the yen sign and returns a clean float.
+
+    Args:
+        x (str): String value from a spreadsheet cell.
+
+    Returns:
+        x (float): Cleaned value.
+    """
+
     try:
         x = float(x.replace("¥", "").replace(",", ""))
     except:
@@ -25,6 +35,16 @@ def str_to_float(x):
 
 
 def reverse_list_odd_date(lst):
+    """
+    Function that reverse the hostess list on the odd days to avoid having errors
+    in the same sheets every time.
+
+    Args:
+        lst (list): List of hostess names.
+
+    Returns:
+        lst (list): Same list but reversed order on odd days.
+    """
     current_date = datetime.datetime.now().day
 
     if current_date % 2 == 0:
@@ -35,6 +55,15 @@ def reverse_list_odd_date(lst):
 
 
 def calc_totals_nrws(worksheet, year, month):
+    """
+    Function that calculates the totals for each column and inputs the amounts.
+
+    Args:
+        worksheet (gspread.ws): Worksheet where will be added values.
+        year (int): Year for the calculation.
+        month (int): Month for the calculation.
+    """
+
     date_str = f"{year}{month}"
     days_in_mon = days_in_month(date_str)
     try_number = 0
@@ -143,6 +172,16 @@ def calc_totals_nrws(worksheet, year, month):
 
 
 def get_spreadsheet(spreadsheet_name=None, spreadsheet_id=None):
+    """
+    Function that gets the spreadsheet with name and id as the arguments.
+
+    Args:
+        spreadsheet_name (str): Name of the spreadsheet.
+        spreadsheet_id (str): Id of the spreadsheet.
+
+    Returns:
+        sh (gspread.spreadsheet): Google Spreadsheet object.
+    """
     # Specify the Google Sheets document and worksheet
 
     credentials, _ = google.auth.default(
@@ -168,6 +207,16 @@ def get_spreadsheet(spreadsheet_name=None, spreadsheet_id=None):
 
 
 def get_specific_hostess_df(df, hostess_name):
+    """
+    Function that filters the general dataframe with the specific hostess_name.
+
+    Args:
+        df (pd.Dataframe): Pandas dataframe of all hostess.
+        hostess_name (str): Specific hostess names.
+
+    Returns:
+        loc_df (pd.Dataframe): Pandas dataframe filtered and with some renamed columns.
+    """
     loc_df = df.copy()
     columns_ind = [
         "DAY",

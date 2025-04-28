@@ -13,7 +13,15 @@ PROJECT_ID = os.environ["PROJECT_ID"]
 
 def create_new_query(month, year=2023):
     """
-    This function returns the query that will be used later for filling the individual sheets for each hostess
+    This function returns the query that will be used later for filling the
+    individual sheets for each hostess.
+
+    Args:
+        month (int): Month to filter the query.
+        year (int): Year to filter the query.
+    Returns:
+        query (str): Query string to be excecuted later, the query uses a table
+        funcion.
     """
     month_str = (2 - len(str(month))) * "0" + str(
         month
