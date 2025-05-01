@@ -110,10 +110,10 @@ def get_dataframe(month=9, year=2023):
 
     try:
         query_job = bq_client.query(query)
+        results_df = query_job.to_dataframe()
     except Exception as e:
         print("Error in get_dataframe query_job part")
         raise e
-    results_df = query_job.to_dataframe()
 
     # Convert time columns to string
 
