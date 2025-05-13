@@ -51,13 +51,19 @@ def save_error_to_bucket(message, file_name, bucket_name):
     """
     # Initialize the Cloud Storage client
     ERROR_BUCKET = os.environ["ERROR_BUCKET"]
-    print(f"Saving error message to bucket {ERROR_BUCKET}/{file_name}")
-    storage_client = storage.Client()
-    bucket = storage_client.get_bucket(ERROR_BUCKET)
-    message = str(message)
-    # Create a new blob and upload the message
-    blob = bucket.blob(file_name)
-    blob.upload_from_string(message)
+    try:
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(ERROR_BUCKET)
+        message = str(message)
+        # Create a new blob and upload the message
+        blob = bucket.blob(file_name)
+        print(f"Saving error message to bucket {ERROR_BUCKET}/{file_name}")
+        blob.upload_from_string(message)
+    except Exception as e:
+        print(
+            f"Error in save_error_to_bucket message: {e}, couldn't save error info to bucket"
+        )
+
     return
 
 
