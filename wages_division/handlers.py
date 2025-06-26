@@ -34,7 +34,7 @@ def handle_gspread_error(error, function_name, bucket_name):
         if len(error_message) < 300:
             print(error_message)
         function_return = False
-
+    error_message = f"""Function: {function_name}\nMessage: {error_message}"""
     save_error_to_bucket(error_message, file_name, bucket_name)
     return function_return
 
