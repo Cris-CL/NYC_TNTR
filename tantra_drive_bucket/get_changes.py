@@ -64,7 +64,7 @@ def changes_to_df(token,response_json):
     except Exception as e:
         print("Probably there is no new data")
         print(f"Error: {e}")
-        df_orig = df.copy()
+    df_orig = df.copy()
     try:
         df = df[
             df["file_name"].map(
