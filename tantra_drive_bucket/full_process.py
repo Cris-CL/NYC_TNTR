@@ -1,9 +1,7 @@
 import os
 from get_last_token import get_token
 from get_changes import (
-    fetch_changes,
     changes_to_df,
-    df_to_dict,
     changes_to_bq,
     fetch_changes_specific,
 )
@@ -34,17 +32,13 @@ def full_process():
     df_changes = changes_to_df(
         new_token, changes
     )  ## Put the changes info in a dataframe
-    if isinstance(df_changes, bool):
+    if len(df_changes) < 1:
         print("There is no new data")
         return
 
     df_changes.sort_values(
         by="time", inplace=True, ascending=True
     )  ## Sort the dataframe in ascending order by the time of modification
-
-    dict_changes = df_to_dict(
-        df_changes
-    )  ## make a dict with the file names and file id for looping later
 
     ## Move files from the drive folder to the bucket
     today_date = datetime.now().date()
