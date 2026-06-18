@@ -57,14 +57,18 @@ def changes_to_df(token, response_json):
         if len(df) == 0:
             print("No new data")
             return False
+    except Exception as e:
+        print("Probably there is no new data")
+        print(f"Error: {e}")
+    try:
         df = df[["fileId", "time", "file.name"]]
         df["token"] = token
         df.columns = [col.lower().replace(".", "_") for col in df.columns]
         df = df.astype({"token": "int32"})
         df["time"] = pd.to_datetime(df["time"]).dt.tz_convert(None)
     except Exception as e:
-        print("Probably there is no new data")
-        print(f"Error: {e}")
+        print("Dataframe doesnt have the desired colums")
+        print(f"Dataframe columns {' '.join(df.columns)}")
     df_orig = df.copy()
     try:
         df = df[

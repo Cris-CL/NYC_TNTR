@@ -42,10 +42,13 @@ def full_process():
 
     ## Move files from the drive folder to the bucket
     today_date = datetime.now().date()
+    if "file_name" not in df_changes.columns:
+        print("Dataframe is not correct")
+        return
     for index, row in df_changes.iterrows():
-        file_name = row["file_name"]
-        file_id = row["fileid"]
         try:
+            file_name = row["file_name"]
+            file_id = row["fileid"]
             time_stamp = row["time"].date()
             if time_stamp != today_date:
                 continue
