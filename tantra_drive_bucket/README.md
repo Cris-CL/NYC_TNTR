@@ -2,6 +2,27 @@
 
 This folder contains a webhook-driven pipeline that reacts to changes in a Google Drive (Shared Drive) folder. When a file is added or modified in the watched Drive, Google sends a notification to the webhook, which then detects the new/changed `.xlsx` files and copies them into a Google Cloud Storage (GCS) bucket. Each processed change is also logged into a BigQuery table, which doubles as the store for the Drive change-tracking token.
 
+## Where this fits across the Tantra functions
+
+This is the middle stage of a multi-function pipeline:
+
+```
+wh_listener_scheduler  ── periodically (re)registers the Drive files().watch on the folder
+        ▼
+webhook_tantra         ── public listener Drive POSTs to on each change; filters noise,
+        │                  fire-and-forget triggers this function
+        ▼
+tantra_drive_bucket    ── (THIS) pulls Drive changes, moves .xlsx files to the stage bucket,
+        │                  logs the change + token to BigQuery
+        ▼
+tantra_msg_send        ── triggered by the new bucket object, publishes a Pub/Sub message
+        ▼
+(downstream consumer)  ── reads the file, validates contents/naming fit the target table,
+                          loads a new version of the data into BigQuery
+```
+
+`tantra_master_updater` is a sibling pipeline (Google Sheets → BigQuery for wages/prices/extra/online master data), not part of this trigger chain. See the README in each folder for details.
+
 ## High-level flow
 
 ```

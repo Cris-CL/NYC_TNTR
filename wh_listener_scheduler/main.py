@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 import google.auth
 from googleapiclient.discovery import build
+import pytz
 
 SHARE_FOLDER_ID = os.environ.get("SHARE_FOLDER_ID")
 
@@ -30,7 +31,7 @@ def setup_shared_folder_webhook(shared_folder_id, week_factor=0, test_var=True,d
     weeks = 7 * days
 
     #### this is the timestamp of the current time in miliseconds
-    now = int(datetime.utcnow().timestamp()*1e3)
+    now = int(datetime.now(pytz.timezone('GMT')).timestamp()*1e3)
     # print(now)
     h_factor = 7
     expiration = now + weeks * week_factor - 1 * minutes + day_factor*days + hours*h_factor # 9 hours to account for time zone difference

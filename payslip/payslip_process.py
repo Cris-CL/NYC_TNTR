@@ -30,6 +30,7 @@ def get_bill_file(bill_file_id, credentials=None):
     # credentials, _ = google.auth.default()
     gc = gspread.authorize(credentials)
     bill_file = gc.open_by_key(bill_file_id)
+    print("File named:",bill_file.title)
     return bill_file
 
 
