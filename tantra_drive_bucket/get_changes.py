@@ -6,6 +6,15 @@ from datetime import datetime
 import pytz
 
 
+def get_fresh_start_token(service, drive_id=None):
+    """Ask Drive for a fresh startPageToken (baseline = now)."""
+    params = {}
+    if drive_id:
+        params = {"driveId": drive_id, "supportsAllDrives": True}
+    response = service.changes().getStartPageToken(**params).execute()
+    return response.get("startPageToken")
+
+
 def fetch_changes(saved_start_page_token, creds=None):
     """Retrieve the list of changes for the currently authenticated user.
         prints changed file's ID
@@ -21,9 +30,13 @@ def fetch_changes(saved_start_page_token, creds=None):
     print("fetching changes")
     if not creds:
         creds, _ = google.auth.default()
+    response = None
+    # create drive api client
+    service = build("drive", "v3", credentials=creds)
     try:
-        # create drive api client
-        service = build("drive", "v3", credentials=creds)
+        if saved_start_page_token is None:
+            print("No saved token, starting from a fresh start page token")
+            saved_start_page_token = get_fresh_start_token(service)
 
         # Begin with our last saved start token for this user or the
         # current token from getStartPageToken()
@@ -43,8 +56,18 @@ def fetch_changes(saved_start_page_token, creds=None):
             page_token = response.get("nextPageToken")
 
     except HttpError as error:
-        print(f"An error occurred: {error}")
-        saved_start_page_token = None
+        print(f"An error occurred (status {error.resp.status}): {error}")
+        if error.resp.status == 404:
+            # Drive only keeps change history for a limited window; a 404
+            # means the saved token expired, so reset the baseline to now
+            try:
+                saved_start_page_token = get_fresh_start_token(service)
+                print(f"Saved token expired, reset to {saved_start_page_token}")
+            except HttpError as reset_error:
+                print(f"Could not reset start page token: {reset_error}")
+                saved_start_page_token = None
+        else:
+            saved_start_page_token = None
 
     return saved_start_page_token, response
 
@@ -108,9 +131,13 @@ def fetch_changes_specific(saved_start_page_token, drive_id, creds=None):
     print("fetching changes")
     if not creds:
         creds, _ = google.auth.default()
+    response = None
+    # create drive api client
+    service = build("drive", "v3", credentials=creds)
     try:
-        # create drive api client
-        service = build("drive", "v3", credentials=creds)
+        if saved_start_page_token is None:
+            print("No saved token, starting from a fresh start page token")
+            saved_start_page_token = get_fresh_start_token(service, drive_id)
 
         # Begin with our last saved start token for this user or the
         # current token from getStartPageToken()
@@ -139,7 +166,17 @@ def fetch_changes_specific(saved_start_page_token, drive_id, creds=None):
             page_token = response.get("nextPageToken")
 
     except HttpError as error:
-        print(f"An error occurred: {error}")
-        saved_start_page_token = None
+        print(f"An error occurred (status {error.resp.status}): {error}")
+        if error.resp.status == 404:
+            # Drive only keeps change history for a limited window; a 404
+            # means the saved token expired, so reset the baseline to now
+            try:
+                saved_start_page_token = get_fresh_start_token(service, drive_id)
+                print(f"Saved token expired, reset to {saved_start_page_token}")
+            except HttpError as reset_error:
+                print(f"Could not reset start page token: {reset_error}")
+                saved_start_page_token = None
+        else:
+            saved_start_page_token = None
     print("Finished loop")
     return saved_start_page_token, response

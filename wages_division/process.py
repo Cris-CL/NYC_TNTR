@@ -149,8 +149,9 @@ def process_sheets_from_master(month, year_process, host_names="All", attempts=1
     spread_2023 = os.environ["MASTER_SPREADSHEET_ID"]
     spread_2024 = os.environ["MASTER_SPREADSHEET_ID_24"]
     spread_2025 = os.environ["MASTER_SPREADSHEET_ID_25"]
+    spread_2026 = os.environ["MASTER_SPREADSHEET_ID_26"]
 
-    master_selector = {"2023": spread_2023, "2024": spread_2024, "2025": spread_2025}
+    master_selector = {"2023": spread_2023, "2024": spread_2024, "2025": spread_2025, "2026": spread_2026}
     master_id = master_selector[str(year_process)]
 
     hostess_dict = get_hostess_dict(master_id)

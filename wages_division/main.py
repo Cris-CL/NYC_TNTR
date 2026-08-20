@@ -58,3 +58,57 @@ def process_sheet(request):
     else:
         http_status = "", 400
     return http_status
+
+# from flask import Flask, request, jsonify
+# from process import process_sheets_from_master
+
+# app = Flask(__name__)
+
+
+# @app.route("/", methods=["GET"])
+# def health():
+#     return "OK", 200
+
+
+# @app.route("/process_sheet", methods=["POST", "GET"])
+# def process_sheet():
+#     try:
+#         if request.method == "GET":
+#             return "<h1>This is a webhook listener!</h1>", 200
+
+#         posted_data = request.get_json(silent=True)
+#         if not posted_data:
+#             return jsonify({"error": "No JSON body"}), 400
+
+#         print("We have received a request")
+#         print(posted_data)
+
+#         hostess_name = posted_data["names"]
+#         type_request = posted_data["type"]
+#         attempt_number = posted_data["attempt"]
+#         month = posted_data["month"]
+#         year = posted_data["year"]
+
+#         if type_request == "test":
+#             return "<h1>Test run correctly</h1>", 200
+
+#         if type_request == "regular":
+#             lis_names = process_sheets_from_master(month, year, hostess_name)
+#         elif type_request == "retry":
+#             lis_names = process_sheets_from_master(
+#                 month, year, hostess_name, attempts=attempt_number
+#             )
+#         else:
+#             return jsonify({"error": "Invalid type"}), 400
+
+#         if len(lis_names) > 0:
+#             print(f"Retrying failed attempts for: {','.join(lis_names)}")
+#             process_sheets_from_master(month, year, lis_names, attempts=2)
+#         else:
+#             print("No retries left, finishing process")
+
+#         return jsonify({"status": "success"}), 200
+
+#     except Exception as e:
+#         print("Error in process_sheet:", e)
+#         return jsonify({"status": "error", "message": str(e)}), 500
